@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "FrontEnd",
-    "slug": "FrontEnd",
+    "name": "Givral Bakery",
+    "slug": "givral-bakery",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -20,7 +20,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.FrontEnd"
+      "package": "com.givral.bakery"
     },
     "web": {
       "output": "static",

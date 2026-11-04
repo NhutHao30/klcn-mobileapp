@@ -63,6 +63,9 @@ interface AuthContextType {
   login: (
     payload: LoginPayload
   ) => Promise<{ success: boolean; role?: number; isStaff?: boolean; error?: string }>;
+  loginWithToken: (
+    token: string
+  ) => Promise<{ success: boolean; role?: number; isStaff?: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   setUser: (user: User | null) => void;
@@ -79,6 +82,7 @@ const AuthContext = createContext<AuthContextType>({
   isCustomer: false,
   isLoading: false,
   login: async () => ({ success: false }),
+  loginWithToken: async () => ({ success: false }),
   logout: async () => {},
   refreshProfile: async () => {},
   setUser: () => {},
@@ -151,6 +155,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithToken = async (jwtToken: string) => {
+    setIsLoading(true);
+    try {
+      setTokenState(jwtToken);
+      setAuthToken(jwtToken);
+      const me = await authApi.getMe();
+      if (me) {
+        setUser(me);
+        setIsLoading(false);
+        const userRole = getRoleId(me) ?? CUSTOMER_ROLE_ID;
+        return { success: true, role: userRole, isStaff: userRole !== CUSTOMER_ROLE_ID };
+      }
+      setIsLoading(false);
+      return { success: false, error: 'Không thể lấy thông tin người dùng' };
+    } catch (error: any) {
+      setIsLoading(false);
+      return { success: false, error: error?.message || 'Đăng nhập bằng Token thất bại' };
+    }
+  };
+
   const logout = async () => {
     setIsLoading(true);
     await authApi.logout();
@@ -190,6 +214,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isCustomer,
         isLoading,
         login,
+        loginWithToken,
         logout,
         refreshProfile,
         setUser,

@@ -24,12 +24,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/AuthContext';
 import { authApi } from '@/services/api/authApi';
 import { biometricService } from '@/services/biometricService';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { login, isLoading, setUser, logout } = useAuth();
+  const { login, loginWithToken, isLoading, setUser, logout } = useAuth();
 
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
@@ -359,21 +363,56 @@ export default function LoginScreen() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      const redirectUrl = Linking.createURL('google-auth');
+      let apiBase = getApiBaseUrl();
+      if (!apiBase.startsWith('https://') && !apiBase.includes('localhost')) {
+        apiBase = 'https://givral-bakery.vercel.app/api';
+      }
+      const authUrl = `${apiBase}/auth/google?redirect_to=${encodeURIComponent(redirectUrl)}`;
+
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
+
+      if (result.type === 'success' && result.url) {
+        const parsed = Linking.parse(result.url);
+        const token = (parsed.queryParams?.token as string) || null;
+        const error = parsed.queryParams?.error as string;
+
+        if (error) {
+          Alert.alert('Đăng nhập thất bại', 'Xác thực Google bị hủy hoặc có lỗi xảy ra.');
+          return;
+        }
+
+        if (token) {
+          const res = await loginWithToken(token);
+          if (res.success) {
+            Alert.alert('Thành công', 'Đăng nhập tài khoản Google thành công!');
+            if (res.isStaff) {
+              router.replace('/(admin)/' as any);
+            } else {
+              router.replace('/(customer)/' as any);
+            }
+          } else {
+            Alert.alert('Lỗi', res.error || 'Không thể đăng nhập bằng tài khoản Google.');
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Google login error:', error);
+      Alert.alert('Lỗi', 'Không thể khởi động đăng nhập Google: ' + (error?.message || error));
+    }
+  };
+
   const handleSocialLogin = (provider: 'Google' | 'Facebook') => {
+    if (provider === 'Google') {
+      handleGoogleLogin();
+      return;
+    }
     Alert.alert(
       `Đăng nhập ${provider}`,
-      `Bạn có muốn đăng nhập nhanh bằng tài khoản ${provider}?`,
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Xác nhận',
-          onPress: () => {
-            setUser({ HOTEN: `Người dùng ${provider}`, QUYEN: 3, EMAIL: `user.${provider.toLowerCase()}@gmail.com` });
-            Alert.alert('Thành công', `Đăng nhập thành công với tài khoản ${provider}!`);
-            router.replace('/(customer)');
-          },
-        },
-      ]
+      `Tính năng đăng nhập với ${provider} đang được hoàn thiện. Vui lòng sử dụng Đăng nhập Google hoặc tài khoản thông thường.`,
+      [{ text: 'Đóng', style: 'cancel' }]
     );
   };
 
@@ -612,22 +651,22 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          {/* SOCIAL LOGIN BUTTONS (Đang tạm khóa / mờ đi theo yêu cầu) */}
+          {/* SOCIAL LOGIN BUTTONS */}
           {isLogin && (
             <View style={styles.socialContainer}>
               <TouchableOpacity
-                style={[styles.socialBtn, styles.googleBtn, { opacity: 0.4 }]}
-                disabled={true}
-                activeOpacity={1}
+                style={[styles.socialBtn, styles.googleBtn]}
+                onPress={handleGoogleLogin}
+                activeOpacity={0.8}
               >
                 <Ionicons name="logo-google" size={20} color="#DB4437" style={{ marginRight: 8 }} />
                 <ThemedText style={styles.googleBtnText}>Google</ThemedText>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.socialBtn, styles.facebookBtn, { opacity: 0.4 }]}
-                disabled={true}
-                activeOpacity={1}
+                style={[styles.socialBtn, styles.facebookBtn, { opacity: 0.5 }]}
+                onPress={() => handleSocialLogin('Facebook')}
+                activeOpacity={0.8}
               >
                 <Ionicons name="logo-facebook" size={20} color="#ffffff" style={{ marginRight: 8 }} />
                 <ThemedText style={styles.facebookBtnText}>Facebook</ThemedText>
