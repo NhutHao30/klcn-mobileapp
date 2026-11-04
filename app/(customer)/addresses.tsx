@@ -227,7 +227,11 @@ export default function CustomerAddressesPage() {
   const filteredWards = useMemo(() => {
     const q = pickerSearch.trim().toLowerCase();
     if (!q) return wards;
-    return wards.filter((w) => w.WardName.toLowerCase().includes(q));
+    return wards.filter(
+      (w) =>
+        w.WardName.toLowerCase().includes(q) ||
+        (w.DistrictName && w.DistrictName.toLowerCase().includes(q))
+    );
   }, [wards, pickerSearch]);
 
   const renderAddressCard = ({ item }: { item: CustomerAddress }) => {
@@ -418,7 +422,7 @@ export default function CustomerAddressesPage() {
                     }}
                   >
                     {selectedWard
-                      ? selectedWard.WardName
+                      ? (selectedWard.FullName || `${selectedWard.WardName}${selectedWard.DistrictName ? ` (${selectedWard.DistrictName})` : ''}`)
                       : selectedProvince
                       ? 'Chọn Phường / Xã'
                       : 'Vui lòng chọn Tỉnh/Thành phố trước'}
@@ -509,7 +513,9 @@ export default function CustomerAddressesPage() {
               style={{ maxHeight: 340 }}
               renderItem={({ item }) => {
                 const isProv = pickerType === 'province';
-                const label = isProv ? item.ProvinceName : item.WardName;
+                const label = isProv
+                  ? item.ProvinceName
+                  : (item.FullName || `${item.WardName}${item.DistrictName ? ` (${item.DistrictName})` : ''}`);
                 const isSelected = isProv
                   ? selectedProvince?.ProvinceID === item.ProvinceID
                   : selectedWard?.WardCode === item.WardCode;

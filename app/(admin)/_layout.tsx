@@ -2,13 +2,18 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { useColorScheme, View, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 
 export default function AdminLayout() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const insets = useSafeAreaInsets();
   const adminGold = '#d97706'; // Màu vàng chủ đạo Bakery thống nhất với phía khách hàng
+
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 12 : 8);
+  const tabHeight = 56 + bottomPadding;
 
   const { user, profile, role } = useAuth();
   const vaiTroId = Number(
@@ -34,8 +39,8 @@ export default function AdminLayout() {
           shadowOpacity: 0.08,
           shadowRadius: 8,
           backgroundColor: colors.background,
-          height: Platform.OS === 'ios' ? 76 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 18 : 8,
+          height: tabHeight,
+          paddingBottom: bottomPadding,
           paddingTop: 6,
         },
         tabBarLabelStyle: {

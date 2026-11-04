@@ -1,7 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { useColorScheme, View } from 'react-native';
+import { useColorScheme, View, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
 
 import { useLanguage } from '@/context/LanguageContext';
@@ -10,6 +11,10 @@ export default function CustomerLayout() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
+
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 12 : 8);
+  const tabHeight = 56 + bottomPadding;
 
   return (
     <Tabs
@@ -19,14 +24,14 @@ export default function CustomerLayout() {
         tabBarInactiveTintColor: colors.icon,
         tabBarStyle: {
           borderTopWidth: 0,
-          elevation: 10,
+          elevation: 12,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.1,
           shadowRadius: 4,
           backgroundColor: colors.background,
-          height: 60,
-          paddingBottom: 8,
+          height: tabHeight,
+          paddingBottom: bottomPadding,
           paddingTop: 8,
         },
         tabBarLabelStyle: {

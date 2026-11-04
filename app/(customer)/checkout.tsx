@@ -465,7 +465,11 @@ export default function CustomerCheckoutPage() {
   const filteredWards = useMemo(() => {
     const q = pickerSearch.trim().toLowerCase();
     if (!q) return wards;
-    return wards.filter((w) => w.WardName.toLowerCase().includes(q));
+    return wards.filter(
+      (w) =>
+        w.WardName.toLowerCase().includes(q) ||
+        (w.DistrictName && w.DistrictName.toLowerCase().includes(q))
+    );
   }, [wards, pickerSearch]);
 
   // Generate QR URLs
@@ -618,7 +622,7 @@ export default function CustomerCheckoutPage() {
                 ) : (
                   <ThemedText style={{ color: selectedWard ? colors.text : colors.icon, fontSize: 14, flex: 1 }}>
                     {selectedWard
-                      ? selectedWard.WardName
+                      ? (selectedWard.FullName || `${selectedWard.WardName}${selectedWard.DistrictName ? ` (${selectedWard.DistrictName})` : ''}`)
                       : selectedProvince
                         ? 'Chọn Phường / Xã'
                         : 'Chọn Tỉnh/Thành phố trước'}
@@ -1040,7 +1044,9 @@ export default function CustomerCheckoutPage() {
               style={{ maxHeight: 340 }}
               renderItem={({ item }) => {
                 const isProv = pickerType === 'province';
-                const label = isProv ? item.ProvinceName : item.WardName;
+                const label = isProv
+                  ? item.ProvinceName
+                  : (item.FullName || `${item.WardName}${item.DistrictName ? ` (${item.DistrictName})` : ''}`);
                 const isSelected = isProv
                   ? selectedProvince?.ProvinceID === item.ProvinceID
                   : selectedWard?.WardCode === item.WardCode;
