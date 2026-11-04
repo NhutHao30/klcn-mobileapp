@@ -12,6 +12,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { notificationService } from '@/services/notificationService';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -440,6 +441,16 @@ export default function CustomerCheckoutPage() {
       clearCart();
       setShowNotification(true);
 
+      // Kích hoạt thông báo nổi trên đầu màn hình điện thoại & màn hình khóa
+      try {
+        notificationService.sendLocalNotification(
+          '🎂 Givral Bakery - Đặt hàng thành công!',
+          `Đơn hàng trị giá ${totalPayment.toLocaleString('vi-VN')}₫ của bạn đã được tiếp nhận và đang được chuẩn bị!`,
+          { route: '/(customer)/orders' },
+          'orders'
+        );
+      } catch (eNoti) {}
+
       setTimeout(() => {
         router.replace('/(customer)/orders');
       }, 1500);
@@ -622,7 +633,7 @@ export default function CustomerCheckoutPage() {
                 ) : (
                   <ThemedText style={{ color: selectedWard ? colors.text : colors.icon, fontSize: 14, flex: 1 }}>
                     {selectedWard
-                      ? (selectedWard.FullName || `${selectedWard.WardName}${selectedWard.DistrictName ? ` (${selectedWard.DistrictName})` : ''}`)
+                      ? ((selectedWard as any).FullName || `${selectedWard.WardName}${(selectedWard as any).DistrictName ? ` (${(selectedWard as any).DistrictName})` : ''}`)
                       : selectedProvince
                         ? 'Chọn Phường / Xã'
                         : 'Chọn Tỉnh/Thành phố trước'}
@@ -730,8 +741,6 @@ export default function CustomerCheckoutPage() {
         <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
           <View style={styles.voucherInputRow}>
             <TextInput
-              placeholder="Nhập mã Voucher (Ví dụ: GIVRAL50)"
-              placeholderTextColor={colors.icon}
               style={[styles.voucherInput, { color: colors.text, borderColor: colors.cardBorder }]}
               value={voucherCode}
               onChangeText={setVoucherCode}

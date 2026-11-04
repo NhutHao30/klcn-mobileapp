@@ -422,7 +422,7 @@ export default function CustomerAddressesPage() {
                     }}
                   >
                     {selectedWard
-                      ? (selectedWard.FullName || `${selectedWard.WardName}${selectedWard.DistrictName ? ` (${selectedWard.DistrictName})` : ''}`)
+                      ? ((selectedWard as any).FullName || `${selectedWard.WardName}${(selectedWard as any).DistrictName ? ` (${(selectedWard as any).DistrictName})` : ''}`)
                       : selectedProvince
                       ? 'Chọn Phường / Xã'
                       : 'Vui lòng chọn Tỉnh/Thành phố trước'}

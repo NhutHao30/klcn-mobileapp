@@ -7,6 +7,7 @@ import { Colors } from '@/constants/theme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { notificationService } from '@/services/notificationService';
 
 const STORAGE_KEY = 'CUSTOMER_NOTIFICATION_SETTINGS';
 
@@ -45,8 +46,36 @@ export default function CustomerNotificationsScreen() {
     setSettings(newSettings);
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
+      if (key === 'pushEnabled' && value) {
+        const granted = await notificationService.requestPermission();
+        if (!granted) {
+          Alert.alert(
+            'Quyền thông báo',
+            'Vui lòng cấp quyền thông báo trong Cài đặt của điện thoại để nhận thông báo nổi trên màn hình.'
+          );
+        }
+      }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleTestNotification = async () => {
+    try {
+      const granted = await notificationService.requestPermission();
+      if (!granted) {
+        Alert.alert('Chưa cấp quyền', 'Vui lòng cho phép quyền thông báo trên điện thoại!');
+        return;
+      }
+      await notificationService.sendLocalNotification(
+        '🎂 Givral Bakery - Thông báo nổi',
+        'Đây là thông báo nổi hoạt động trên điện thoại kể cả khi màn hình đang khóa!',
+        { test: true },
+        'orders'
+      );
+      Alert.alert('Thành công', 'Đã phát thông báo nổi! Bạn hãy nhìn lên thanh thông báo / màn hình khóa của điện thoại.');
+    } catch (e: any) {
+      Alert.alert('Lỗi', e?.message || 'Không thể phát thông báo lúc này.');
     }
   };
 
@@ -135,6 +164,15 @@ export default function CustomerNotificationsScreen() {
               />
             </View>
           </View>
+
+          {/* NÚT THỬ NGHIỆM THÔNG BÁO NỔI */}
+          <TouchableOpacity
+            style={[styles.testBtn, { backgroundColor: colors.tint }]}
+            onPress={handleTestNotification}
+          >
+            <Ionicons name="notifications-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+            <ThemedText style={styles.testBtnText}>Thử nghiệm thông báo nổi (Banner)</ThemedText>
+          </TouchableOpacity>
         </ScrollView>
       )}
     </ThemedView>
@@ -149,6 +187,8 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 16 },
   sectionTitle: { fontSize: 14, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 12, marginTop: 8, opacity: 0.6 },
   card: { borderRadius: 16, padding: 16, borderWidth: 1, marginBottom: 24 },
+  testBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 12, marginBottom: 30 },
+  testBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
   settingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 },
   settingInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   settingIconBg: { width: 40, height: 40, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 12 },

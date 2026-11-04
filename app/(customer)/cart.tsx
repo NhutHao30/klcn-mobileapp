@@ -111,8 +111,6 @@ export default function CustomerCartPage() {
               <ThemedText style={styles.sectionTitle}>Mã giảm giá / Voucher</ThemedText>
               <View style={styles.voucherInputRow}>
                 <TextInput 
-                  placeholder="Nhập mã GIVRAL30 hoặc FREESHIP"
-                  placeholderTextColor={colors.icon}
                   style={[styles.voucherInput, { color: colors.text, borderColor: colors.cardBorder }]}
                   value={voucherCode}
                   onChangeText={setVoucherCode}

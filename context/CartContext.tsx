@@ -76,13 +76,29 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Sync Cart from Backend Laravel API
       cartApi.getCart().then(data => {
         if (data && data.items) {
-          const remoteItems: CartItem[] = data.items.map((i: any) => ({
-            id: String(i.id || i.MASP),
-            name: i.name || 'Bánh Givral',
-            price: Number(i.price || 0),
-            quantity: Number(i.quantity || 1),
-            image: formatImageUrl(i.image),
-          }));
+          const remoteItems: CartItem[] = (data.items || [])
+            .map((i: any) => {
+              const sp = i.sanpham || i.sanPham || {};
+              const spId = sp.id || i.sanPhamId || i.sanphamId || i.MASP || i.masp;
+              const spName = sp.tenSanPham || sp.ten_san_pham || sp.name || i.name;
+              const spPrice = Number(sp.giaBan ?? sp.price ?? i.price ?? 0);
+              const spQty = Number(i.soLuong ?? i.quantity ?? 1);
+              const spImage = sp.hinhAnh || sp.image || i.image;
+
+              // Bỏ qua các mục không hợp lệ hoặc giá = 0 để tránh sản phẩm ma 0đ
+              if (!spId || !spName || spPrice <= 0) {
+                return null;
+              }
+
+              return {
+                id: String(spId),
+                name: spName,
+                price: spPrice,
+                quantity: Math.max(1, spQty),
+                image: formatImageUrl(spImage),
+              };
+            })
+            .filter((item: any): item is CartItem => item !== null);
           setCartItems(remoteItems);
         }
       });
@@ -158,6 +174,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addToCart = (product: any, qty: number = 1) => {
     if (!isLoggedIn) {
       promptLoginRequired('thêm bánh vào giỏ hàng');
+      return;
+    }
+
+    // Kiểm tra tồn kho của sản phẩm
+    const rawStock = product.soLuongTon ?? product.SOLUONG_TON ?? product.tonKho ?? product.TONKHO_THUCTE;
+    const isOutOfStock = product.isOutOfStock || (rawStock !== undefined && rawStock !== null && Number(rawStock) <= 0);
+    if (isOutOfStock) {
+      Alert.alert('Hết hàng', 'Sản phẩm này hiện đã hết hàng, vui lòng chọn loại bánh khác!');
       return;
     }
 

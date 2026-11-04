@@ -110,7 +110,9 @@ export default function CustomerProductDetail() {
             : 0,
           rating: 4.9,
           reviewsCount: 0,
-          stock: 'Còn hàng',
+          soLuongTon: res.soLuongTon !== undefined ? Number(res.soLuongTon) : (res.SOLUONG_TON !== undefined ? Number(res.SOLUONG_TON) : (res.TONKHO_THUCTE !== undefined ? Number(res.TONKHO_THUCTE) : (res.tonKho !== undefined ? Number(res.tonKho) : 10))),
+          isOutOfStock: Boolean(res.isOutOfStock || (res.soLuongTon !== undefined && Number(res.soLuongTon) <= 0) || (res.SOLUONG_TON !== undefined && Number(res.SOLUONG_TON) <= 0) || (res.tonKho !== undefined && Number(res.tonKho) <= 0)),
+          stock: Boolean(res.isOutOfStock || (res.soLuongTon !== undefined && Number(res.soLuongTon) <= 0) || (res.SOLUONG_TON !== undefined && Number(res.SOLUONG_TON) <= 0) || (res.tonKho !== undefined && Number(res.tonKho) <= 0)) ? 'Hết hàng' : 'Còn hàng',
           code: String(res.MASP || res.id),
           image: formatImageUrl(res.HINHANH || res.hinhAnh),
           description: res.GHICHU || res.moTa || 'Bánh tươi ngon được làm từ nguyên liệu cao cấp chuẩn chất lượng Givral Bakery, sản xuất mới mỗi ngày.',
@@ -267,7 +269,7 @@ export default function CustomerProductDetail() {
           <View style={styles.catRow}>
             <ThemedText style={[styles.catText, { color: colors.cardTextSecondary }]}>{product.category}</ThemedText>
             <View style={[styles.stockBadge, { backgroundColor: colorScheme === 'dark' ? '#064e3b' : '#dcfce7' }]}>
-              <ThemedText style={[styles.stockText, { color: colorScheme === 'dark' ? '#34d399' : '#15803d' }]}>{product.stock}</ThemedText>
+              <ThemedText style={[styles.stockText, { color: product.isOutOfStock ? '#ef4444' : (colorScheme === 'dark' ? '#34d399' : '#15803d') }]}>{product.stock}</ThemedText>
             </View>
           </View>
 
@@ -564,21 +566,33 @@ export default function CustomerProductDetail() {
       {/* BOTTOM ACTION BAR */}
       <View style={[styles.bottomBar, { backgroundColor: colors.cardBg, borderTopColor: colors.cardBorder }]}>
         <TouchableOpacity 
-          style={[styles.addCartBtn, { borderColor: colors.tint }]}
-          onPress={() => addToCart(product, quantity)}
+          style={[styles.addCartBtn, { borderColor: product.isOutOfStock ? '#94a3b8' : colors.tint, opacity: product.isOutOfStock ? 0.6 : 1 }]}
+          onPress={() => {
+            if (product.isOutOfStock) {
+              Alert.alert('Hết hàng', 'Sản phẩm này hiện đã hết hàng, vui lòng chọn loại bánh khác!');
+              return;
+            }
+            addToCart(product, quantity);
+          }}
         >
-          <Ionicons name="cart-outline" size={20} color={colors.tint} style={{ marginRight: 6 }} />
-          <ThemedText style={[styles.addCartText, { color: colors.tint }]}>Thêm vào giỏ</ThemedText>
+          <Ionicons name="cart-outline" size={20} color={product.isOutOfStock ? '#94a3b8' : colors.tint} style={{ marginRight: 6 }} />
+          <ThemedText style={[styles.addCartText, { color: product.isOutOfStock ? '#94a3b8' : colors.tint }]}>
+            {product.isOutOfStock ? 'Tạm hết hàng' : 'Thêm vào giỏ'}
+          </ThemedText>
         </TouchableOpacity>
 
         <TouchableOpacity 
-          style={[styles.buyNowBtn, { backgroundColor: colors.tint }]}
+          style={[styles.buyNowBtn, { backgroundColor: product.isOutOfStock ? '#94a3b8' : colors.tint, opacity: product.isOutOfStock ? 0.6 : 1 }]}
           onPress={() => {
+            if (product.isOutOfStock) {
+              Alert.alert('Hết hàng', 'Sản phẩm này hiện đã hết hàng, vui lòng chọn loại bánh khác!');
+              return;
+            }
             addToCart(product, quantity);
             router.push('/(customer)/checkout');
           }}
         >
-          <ThemedText style={styles.buyNowText}>MUA NGAY</ThemedText>
+          <ThemedText style={styles.buyNowText}>{product.isOutOfStock ? 'HẾT HÀNG' : 'MUA NGAY'}</ThemedText>
         </TouchableOpacity>
       </View>
     </ThemedView>
