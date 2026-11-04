@@ -56,9 +56,9 @@ if (!useAzure && fs.existsSync(envPath)) {
 }
 
 const envContent = useAzure
-  ? `# Kết nối máy chủ Azure VM Cloud (Givral Bakery Live Server)
+  ? `# Kết nối máy chủ Cloud Givral Bakery Live (HTTPS)
 REACT_NATIVE_PACKAGER_HOSTNAME=${detectedIp}
-EXPO_PUBLIC_API_URL=http://104.46.218.250:8000/api
+EXPO_PUBLIC_API_URL=https://givral-bakery.vercel.app/api
 USE_AZURE=true
 `
   : `# Tự động đồng bộ theo Wi-Fi / Hotspot hiện tại bởi scripts/sync-ip.js

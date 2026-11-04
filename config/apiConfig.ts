@@ -5,6 +5,7 @@ import { Platform } from 'react-native';
  * Fallback Wi-Fi IP Address of your PC
  */
 const MANUAL_WIFI_IP = '192.168.1.2';
+const DEFAULT_PRODUCTION_API_URL = 'https://givral-bakery.vercel.app/api';
 
 let runtimeCustomBaseUrl: string | null = null;
 
@@ -29,50 +30,37 @@ export const getApiBaseUrl = (): string => {
     return runtimeCustomBaseUrl;
   }
 
-  // 1. Ưu tiên số 1: Nếu EXPO_PUBLIC_API_URL là Cloud Backend (Azure VM hoặc Public Domain)
-  if (
-    process.env.EXPO_PUBLIC_API_URL &&
-    (process.env.EXPO_PUBLIC_API_URL.startsWith('https://') ||
-      process.env.EXPO_PUBLIC_API_URL.includes('104.46.218.250') ||
-      process.env.EXPO_PUBLIC_API_URL.includes('ngrok'))
-  ) {
-    return process.env.EXPO_PUBLIC_API_URL;
-  }
-
-  // 2. Ưu tiên số 1 cho mạng nội bộ (Wi-Fi / Phát Hotspot từ điện thoại):
-  // Tự động lấy đúng địa chỉ IP mà Expo Go đang kết nối tới Metro Bundler!
-  try {
-    const hostUri =
-      Constants.expoConfig?.hostUri ||
-      (Constants as any).manifest2?.extra?.expoGo?.developer?.manifest?.debuggerHost ||
-      (Constants as any).manifest?.debuggerHost ||
-      (Constants as any).expoGoConfig?.debuggerHost;
-
-    if (hostUri) {
-      const ip = hostUri.split(':')[0];
-      if (isValidPhysicalNetworkIp(ip)) {
-        return `http://${ip}:8000/api`;
-      }
-    }
-  } catch (e) {
-    // Ignore error
-  }
-
-  // 3. Fallback tới EXPO_PUBLIC_API_URL trong .env (được scripts/sync-ip.js tự động cập nhật)
+  // 1. Ưu tiên số 1: Biến môi trường EXPO_PUBLIC_API_URL được inject từ EAS Build / .env
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
 
-  // 4. Fallback tới IP Wi-Fi mặc định
-  if (MANUAL_WIFI_IP) {
-    return `http://${MANUAL_WIFI_IP}:8000/api`;
+  // 2. Môi trường phát triển cục bộ (Expo Go kết nối Metro Bundler)
+  if (__DEV__) {
+    try {
+      const hostUri =
+        Constants.expoConfig?.hostUri ||
+        (Constants as any).manifest2?.extra?.expoGo?.developer?.manifest?.debuggerHost ||
+        (Constants as any).manifest?.debuggerHost ||
+        (Constants as any).expoGoConfig?.debuggerHost;
+
+      if (hostUri) {
+        const ip = hostUri.split(':')[0];
+        if (isValidPhysicalNetworkIp(ip)) {
+          return `http://${ip}:8000/api`;
+        }
+      }
+    } catch (e) {
+      // Ignore error
+    }
+
+    if (MANUAL_WIFI_IP) {
+      return `http://${MANUAL_WIFI_IP}:8000/api`;
+    }
   }
 
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:8000/api';
-  }
-
-  return 'http://localhost:8000/api';
+  // 3. Fallback cho bản Standalone APK / Production
+  return DEFAULT_PRODUCTION_API_URL;
 };
 
 export const API_CONFIG = {

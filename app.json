@@ -20,7 +20,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.givral.bakery"
+      "package": "com.givral.bakery",
+      "usesCleartextTraffic": true
     },
     "web": {
       "output": "static",
@@ -45,6 +46,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e60fae38-0ffd-4de7-a18b-b24333539902"
+      }
     }
   }
 }
