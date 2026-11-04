@@ -51,13 +51,43 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Global Error Handler
+import { Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+
+// Response Interceptor: Global Error Handler & Single Session Auto Logout
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response && error.response.status === 401) {
-      // Token expired or invalid
       currentAuthToken = null;
+      try {
+        await AsyncStorage.removeItem('@auth_token');
+      } catch (e) {}
+
+      const errData = error.response.data;
+      const isConcurrent =
+        errData?.code === 'CONCURRENT_LOGIN' ||
+        String(errData?.error || '').toLowerCase().includes('thiết bị khác') ||
+        String(errData?.message || '').toLowerCase().includes('thiết bị khác');
+
+      if (isConcurrent) {
+        Alert.alert(
+          'Đăng xuất phiên làm việc',
+          'Tài khoản của bạn đã được đăng nhập từ một thiết bị khác! Để đảm bảo an toàn, phiên làm việc trên thiết bị này đã kết thúc.',
+          [
+            {
+              text: 'Đăng nhập lại',
+              onPress: () => {
+                try {
+                  router.replace('/login' as any);
+                } catch (e) {}
+              },
+            },
+          ],
+          { cancelable: false }
+        );
+      }
     }
     return Promise.reject(error);
   }

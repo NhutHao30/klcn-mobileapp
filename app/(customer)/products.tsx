@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, FlatList, TouchableOpacity, Image, TextInput, ScrollView, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, FlatList, TouchableOpacity, Image, TextInput, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useColorScheme } from 'react-native';
@@ -70,16 +70,22 @@ export default function CustomerProductsPage() {
       }
 
       if (items.length > 0) {
-        setProductsList(items.map((p: any) => ({
-          id: p.MASP || p.id,
-          name: p.TENSP || p.name,
-          category: p.loaisanpham?.TENLOAI || p.category || 'Bánh ngọt',
-          price: p.GIABAN ? Number(p.GIABAN) : 0,
-          salePrice: p.GIAGIAM ? Number(p.GIAGIAM) : null,
-          discount: p.GIAGIAM ? Math.round(((Number(p.GIABAN) - Number(p.GIAGIAM)) / Number(p.GIABAN)) * 100) : 0,
-          rating: 5.0,
-          image: formatImageUrl(p.HINHANH),
-        })));
+        setProductsList(items.map((p: any) => {
+          const qty = Number(p.soLuongTon ?? p.SOLUONG_TON ?? p.TONKHO_THUCTE ?? 0);
+          const isOut = Boolean(p.isOutOfStock || qty <= 0);
+          return {
+            id: p.MASP || p.id,
+            name: p.TENSP || p.name,
+            category: p.loaisanpham?.TENLOAI || p.category || 'Bánh ngọt',
+            price: p.GIABAN ? Number(p.GIABAN) : (p.giaBan ? Number(p.giaBan) : 0),
+            salePrice: p.GIAGIAM ? Number(p.GIAGIAM) : null,
+            discount: p.GIAGIAM ? Math.round(((Number(p.GIABAN) - Number(p.GIAGIAM)) / Number(p.GIABAN)) * 100) : 0,
+            rating: 5.0,
+            image: formatImageUrl(p.HINHANH || p.hinhAnh),
+            soLuongTon: qty,
+            isOutOfStock: isOut,
+          };
+        }));
       }
     } catch (e) {
       // Fallback
@@ -143,11 +149,15 @@ export default function CustomerProductsPage() {
       >
         <View style={styles.imageContainer}>
           <Image source={{ uri: item.image }} style={styles.productImage} />
-          {item.discount > 0 && (
+          {item.isOutOfStock ? (
+            <View style={[styles.saleBadge, { backgroundColor: '#dc2626' }]}>
+              <ThemedText style={styles.saleBadgeText}>Hết hàng</ThemedText>
+            </View>
+          ) : item.discount > 0 ? (
             <View style={styles.saleBadge}>
               <ThemedText style={styles.saleBadgeText}>-{item.discount}%</ThemedText>
             </View>
-          )}
+          ) : null}
 
           {/* WISHLIST HEART BUTTON */}
           <TouchableOpacity 
@@ -183,11 +193,16 @@ export default function CustomerProductsPage() {
 
             {/* ADD TO CART BUTTON */}
             <TouchableOpacity 
-              style={[styles.addToCartBtn, { backgroundColor: colors.tint }]}
+              style={[styles.addToCartBtn, { backgroundColor: item.isOutOfStock ? '#94a3b8' : colors.tint }]}
               onPress={(e) => {
                 e.stopPropagation();
+                if (item.isOutOfStock) {
+                  Alert.alert('Hết hàng', 'Sản phẩm này hiện đang tạm hết hàng!');
+                  return;
+                }
                 addToCart(item);
               }}
+              disabled={item.isOutOfStock}
             >
               <Ionicons name="add" size={20} color="#fff" />
             </TouchableOpacity>

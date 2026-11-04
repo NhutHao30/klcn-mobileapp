@@ -125,41 +125,56 @@ export default function CustomerHomePage() {
       const homeData = await productApi.getHomepageProducts();
       if (homeData) {
         if (Array.isArray(homeData.discounted) && homeData.discounted.length > 0) {
-          setSaleProductsList(homeData.discounted.map((p: any) => ({
-            id: String(p.MASP || p.id),
-            name: p.TENSP || p.name,
-            price: Number(p.GIABAN || 0),
-            salePrice: p.PHAN_TRAM_GIAM ? Math.round(Number(p.GIABAN) * (1 - p.PHAN_TRAM_GIAM / 100)) : null,
-            discount: p.PHAN_TRAM_GIAM || 15,
-            rating: 4.9,
-            image: formatImageUrl(p.HINHANH),
-            isNew: !!p.IS_NEW,
-          })));
+          setSaleProductsList(homeData.discounted.map((p: any) => {
+            const qty = Number(p.soLuongTon ?? p.SOLUONG_TON ?? p.TONKHO_THUCTE ?? 0);
+            return {
+              id: String(p.MASP || p.id),
+              name: p.TENSP || p.name,
+              price: Number(p.GIABAN || 0),
+              salePrice: p.PHAN_TRAM_GIAM ? Math.round(Number(p.GIABAN) * (1 - p.PHAN_TRAM_GIAM / 100)) : null,
+              discount: p.PHAN_TRAM_GIAM || 15,
+              rating: 4.9,
+              image: formatImageUrl(p.HINHANH || p.hinhAnh),
+              isNew: !!p.IS_NEW,
+              soLuongTon: qty,
+              isOutOfStock: Boolean(p.isOutOfStock || qty <= 0),
+            };
+          }));
         }
 
         if (Array.isArray(homeData.newest) && homeData.newest.length > 0) {
-          setNewestProductsList(homeData.newest.map((p: any) => ({
-            id: String(p.MASP || p.id),
-            name: p.TENSP || p.name,
-            price: Number(p.GIABAN || 0),
-            rating: 5.0,
-            image: formatImageUrl(p.HINHANH),
-            isNew: true,
-          })));
+          setNewestProductsList(homeData.newest.map((p: any) => {
+            const qty = Number(p.soLuongTon ?? p.SOLUONG_TON ?? p.TONKHO_THUCTE ?? 0);
+            return {
+              id: String(p.MASP || p.id),
+              name: p.TENSP || p.name,
+              price: Number(p.GIABAN || 0),
+              rating: 5.0,
+              image: formatImageUrl(p.HINHANH || p.hinhAnh),
+              isNew: true,
+              soLuongTon: qty,
+              isOutOfStock: Boolean(p.isOutOfStock || qty <= 0),
+            };
+          }));
         }
 
         const bestList = homeData.bestSellers || homeData.expensive;
         if (Array.isArray(bestList) && bestList.length > 0) {
-          setBestSellersList(bestList.map((p: any) => ({
-            id: String(p.MASP || p.id),
-            name: p.TENSP || p.name,
-            price: Number(p.GIABAN || 0),
-            salePrice: p.PHAN_TRAM_GIAM ? Math.round(Number(p.GIABAN) * (1 - p.PHAN_TRAM_GIAM / 100)) : null,
-            discount: p.PHAN_TRAM_GIAM || 0,
-            rating: 5.0,
-            image: formatImageUrl(p.HINHANH),
-            isNew: !!p.IS_NEW,
-          })));
+          setBestSellersList(bestList.map((p: any) => {
+            const qty = Number(p.soLuongTon ?? p.SOLUONG_TON ?? p.TONKHO_THUCTE ?? 0);
+            return {
+              id: String(p.MASP || p.id),
+              name: p.TENSP || p.name,
+              price: Number(p.GIABAN || 0),
+              salePrice: p.PHAN_TRAM_GIAM ? Math.round(Number(p.GIABAN) * (1 - p.PHAN_TRAM_GIAM / 100)) : null,
+              discount: p.PHAN_TRAM_GIAM || 0,
+              rating: 5.0,
+              image: formatImageUrl(p.HINHANH || p.hinhAnh),
+              isNew: !!p.IS_NEW,
+              soLuongTon: qty,
+              isOutOfStock: Boolean(p.isOutOfStock || qty <= 0),
+            };
+          }));
         }
       }
     } catch (e) {}
@@ -218,11 +233,15 @@ export default function CustomerHomePage() {
         <View style={styles.imageContainer}>
           <Image source={{ uri: item.image }} style={styles.productImage} />
           
-          {item.discount > 0 && (
+          {item.isOutOfStock ? (
+            <View style={[styles.saleBadge, { backgroundColor: '#dc2626' }]}>
+              <ThemedText style={styles.saleBadgeText}>Hết hàng</ThemedText>
+            </View>
+          ) : item.discount > 0 ? (
             <View style={styles.saleBadge}>
               <ThemedText style={styles.saleBadgeText}>-{item.discount}%</ThemedText>
             </View>
-          )}
+          ) : null}
 
           {item.isNew && (
             <View style={styles.newBadge}>
@@ -259,8 +278,15 @@ export default function CustomerHomePage() {
             </View>
 
             <TouchableOpacity 
-              style={[styles.addToCartBtn, { backgroundColor: colors.tint }]}
-              onPress={() => addToCart(item)}
+              style={[styles.addToCartBtn, { backgroundColor: item.isOutOfStock ? '#94a3b8' : colors.tint }]}
+              onPress={() => {
+                if (item.isOutOfStock) {
+                  Alert.alert('Hết hàng', 'Sản phẩm này hiện đang tạm hết hàng!');
+                  return;
+                }
+                addToCart(item);
+              }}
+              disabled={item.isOutOfStock}
             >
               <Ionicons name="cart-outline" size={18} color="#fff" />
             </TouchableOpacity>

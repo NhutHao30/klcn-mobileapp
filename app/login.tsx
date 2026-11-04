@@ -365,7 +365,10 @@ export default function LoginScreen() {
 
   const handleGoogleLogin = async () => {
     try {
-      const redirectUrl = Linking.createURL('google-auth');
+      let redirectUrl = Linking.createURL('google-auth');
+      if (redirectUrl.startsWith('frontend://') && !redirectUrl.startsWith('frontend:///')) {
+        redirectUrl = redirectUrl.replace('frontend://', 'frontend:///');
+      }
       let apiBase = getApiBaseUrl();
       if (!apiBase.startsWith('https://') && !apiBase.includes('localhost')) {
         apiBase = 'https://givral-bakery.vercel.app/api';

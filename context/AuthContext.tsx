@@ -149,6 +149,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, error: data.error || data.message || 'Đăng nhập không thành công' };
     } catch (error: any) {
       setIsLoading(false);
+      if (!error.response || error.message === 'Network Error') {
+        return { success: false, error: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng hoặc thử lại sau ít phút!' };
+      }
+      if (error.response?.status === 429) {
+        return { success: false, error: 'Hệ thống phát hiện thao tác liên tục. Vui lòng đợi 30 giây và thử lại!' };
+      }
       const errRes = error.response?.data;
       const message = errRes?.error || errRes?.message || (typeof errRes === 'string' ? errRes : 'Tài khoản hoặc mật khẩu không chính xác');
       return { success: false, error: message };
