@@ -97,6 +97,26 @@ export default function CustomerProductDetail() {
       if (res && (res.MASP || res.id)) {
         currentSpId = String(res.id || res.MASP || id);
         resolvedProductIdRef.current = currentSpId;
+        const rawBranches = Array.isArray(data.branchAvailability)
+          ? data.branchAvailability
+          : (Array.isArray(res.branchAvailability) ? res.branchAvailability : []);
+        const branchAvailability = rawBranches.map((b: any) => ({
+          id: b.id,
+          tenCuaHang: b.tenCuaHang || b.TEN_CUAHANG || 'Cửa hàng Givral',
+          diaChi: b.diaChi || b.DIACHI || '',
+          conHang: Boolean(b.conHang),
+          trangThaiText: b.conHang ? 'Còn hàng' : 'Tạm hết',
+        }));
+
+        const isOutOfStockAll = Boolean(
+          data.isOutOfStock ||
+          res.isOutOfStock ||
+          (branchAvailability.length > 0 && branchAvailability.every((b: any) => !b.conHang)) ||
+          (res.soLuongTon !== undefined && Number(res.soLuongTon) <= 0) ||
+          (res.SOLUONG_TON !== undefined && Number(res.SOLUONG_TON) <= 0) ||
+          (res.tonKho !== undefined && Number(res.tonKho) <= 0)
+        );
+
         const pObj = {
           id: String(res.MASP || res.id),
           numericId: res.id,
@@ -111,8 +131,9 @@ export default function CustomerProductDetail() {
           rating: 4.9,
           reviewsCount: 0,
           soLuongTon: res.soLuongTon !== undefined ? Number(res.soLuongTon) : (res.SOLUONG_TON !== undefined ? Number(res.SOLUONG_TON) : (res.TONKHO_THUCTE !== undefined ? Number(res.TONKHO_THUCTE) : (res.tonKho !== undefined ? Number(res.tonKho) : 10))),
-          isOutOfStock: Boolean(res.isOutOfStock || (res.soLuongTon !== undefined && Number(res.soLuongTon) <= 0) || (res.SOLUONG_TON !== undefined && Number(res.SOLUONG_TON) <= 0) || (res.tonKho !== undefined && Number(res.tonKho) <= 0)),
-          stock: Boolean(res.isOutOfStock || (res.soLuongTon !== undefined && Number(res.soLuongTon) <= 0) || (res.SOLUONG_TON !== undefined && Number(res.SOLUONG_TON) <= 0) || (res.tonKho !== undefined && Number(res.tonKho) <= 0)) ? 'Hết hàng' : 'Còn hàng',
+          isOutOfStock: isOutOfStockAll,
+          stock: isOutOfStockAll ? 'Tạm hết hàng' : 'Còn hàng',
+          branchAvailability,
           code: String(res.MASP || res.id),
           image: formatImageUrl(res.HINHANH || res.hinhAnh),
           description: res.GHICHU || res.moTa || 'Bánh tươi ngon được làm từ nguyên liệu cao cấp chuẩn chất lượng Givral Bakery, sản xuất mới mỗi ngày.',
@@ -315,6 +336,29 @@ export default function CustomerProductDetail() {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* TÌNH TRẠNG CÁC CHI NHÁNH CỬA HÀNG (CHỈ HIỂN THỊ TRẠNG THÁI CÒN HÀNG/TẠM HẾT, KHÔNG LỘ SỐ LƯỢNG TỒN) */}
+          {product.branchAvailability && product.branchAvailability.length > 0 && (
+            <View style={[styles.branchBox, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+              <View style={styles.branchHeaderRow}>
+                <Ionicons name="storefront-outline" size={18} color={colors.tint} />
+                <ThemedText style={[styles.branchBoxTitle, { color: colors.text }]}>Tình trạng tại các cửa hàng Givral</ThemedText>
+              </View>
+              {product.branchAvailability.map((b: any, bIdx: number) => (
+                <View key={`b-${b.id ?? bIdx}`} style={[styles.branchRow, bIdx < product.branchAvailability.length - 1 && styles.branchRowBorder]}>
+                  <View style={{ flex: 1, paddingRight: 8 }}>
+                    <ThemedText style={styles.branchName}>{b.tenCuaHang}</ThemedText>
+                    {b.diaChi ? <ThemedText style={[styles.branchAddress, { color: colors.cardTextSecondary }]}>{b.diaChi}</ThemedText> : null}
+                  </View>
+                  <View style={[styles.branchBadge, { backgroundColor: b.conHang ? (colorScheme === 'dark' ? '#064e3b' : '#dcfce7') : '#fee2e2' }]}>
+                    <ThemedText style={[styles.branchBadgeText, { color: b.conHang ? (colorScheme === 'dark' ? '#34d399' : '#15803d') : '#dc2626' }]}>
+                      {b.conHang ? '🟢 Còn hàng' : '🔴 Tạm hết'}
+                    </ThemedText>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
 
           {/* DESCRIPTION */}
           <ThemedText style={styles.sectionHeaderTitle}>Mô tả sản phẩm</ThemedText>
@@ -917,6 +961,50 @@ const styles = StyleSheet.create({
   buyNowText: {
     color: '#fff',
     fontSize: 14,
+    fontWeight: 'bold',
+  },
+  branchBox: {
+    marginTop: 14,
+    marginBottom: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+  },
+  branchHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  branchBoxTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  branchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+  },
+  branchRowBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#e2e8f0',
+  },
+  branchName: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  branchAddress: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  branchBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  branchBadgeText: {
+    fontSize: 11,
     fontWeight: 'bold',
   },
 });
