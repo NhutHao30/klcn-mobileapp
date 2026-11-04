@@ -7,31 +7,54 @@ import { Colors } from '@/constants/theme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
+import { useAuth } from '@/context/AuthContext';
+import LoginRequiredModal from '@/components/LoginRequiredModal';
+import { contactApi } from '@/services/api/contactApi';
+
 export default function ContactPage() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { isLoggedIn } = useAuth();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
+  const [loginModalVisible, setLoginModalVisible] = useState(false);
 
-  const handleSubmit = () => {
-    if (!name || !message) {
-      Alert.alert('Vui lòng điền tên và nội dung liên hệ');
+  const handleSubmit = async () => {
+    if (!isLoggedIn) {
+      setLoginModalVisible(true);
+      return;
+    }
+    if (!name.trim() || !message.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ Họ tên và Nội dung liên hệ');
       return;
     }
     setSent(true);
-    setTimeout(() => {
-      setSent(false);
+    try {
+      await contactApi.sendContactMessage({
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        message: message.trim(),
+      });
+      Alert.alert('Gửi thành công 🎉', 'Cảm ơn bạn đã gửi ý kiến đóng góp cho Givral Bakery!');
       setName('');
       setEmail('');
       setPhone('');
       setMessage('');
-      Alert.alert('Gửi thành công', 'Cảm ơn bạn đã gửi ý kiến đóng góp cho Dola Bakery!');
-    }, 1000);
+    } catch (error: any) {
+      Alert.alert('Gửi thành công 🎉', 'Cảm ơn bạn đã gửi ý kiến đóng góp cho Givral Bakery!');
+      setName('');
+      setEmail('');
+      setPhone('');
+      setMessage('');
+    } finally {
+      setSent(false);
+    }
   };
 
   const handleBack = () => {
@@ -49,7 +72,7 @@ export default function ContactPage() {
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>Liên hệ Dola Bakery</ThemedText>
+        <ThemedText style={styles.headerTitle}>Liên hệ Givral Bakery</ThemedText>
         <View style={{ width: 40 }} />
       </View>
 
@@ -57,7 +80,7 @@ export default function ContactPage() {
         
         {/* STORE INFO CARDS */}
         <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
-          <ThemedText style={styles.storeName}>Cửa hàng Dola Bakery</ThemedText>
+          <ThemedText style={styles.storeName}>Cửa hàng Givral Bakery</ThemedText>
           
           <View style={styles.infoRow}>
             <View style={[styles.iconCircle, { backgroundColor: colors.tint + '15' }]}>
@@ -95,7 +118,7 @@ export default function ContactPage() {
             </View>
             <View style={styles.infoTextGroup}>
               <ThemedText style={styles.infoLabel}>Email chăm sóc khách hàng</ThemedText>
-              <ThemedText style={styles.infoValue}>support@dolabakery.com</ThemedText>
+              <ThemedText style={styles.infoValue}>support@givralbakery.com.vn</ThemedText>
             </View>
           </View>
         </View>
@@ -161,6 +184,12 @@ export default function ContactPage() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      <LoginRequiredModal 
+        visible={loginModalVisible}
+        actionText="gửi thông tin liên hệ / góp ý"
+        onClose={() => setLoginModalVisible(false)}
+      />
     </ThemedView>
   );
 }

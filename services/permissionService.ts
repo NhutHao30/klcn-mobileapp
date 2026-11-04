@@ -21,7 +21,7 @@ export const permissionService = {
       } else {
         Alert.alert(
           'Quyền Camera',
-          'Dola Bakery cần quyền sử dụng Camera để quét mã QR / Barcode bánh. Vui lòng cấp quyền trong Cài đặt điện thoại.',
+          'Givral Bakery cần quyền sử dụng Camera để quét mã QR / Barcode bánh. Vui lòng cấp quyền trong Cài đặt điện thoại.',
           [
             { text: 'Hủy', style: 'cancel' },
             { text: 'Mở Cài đặt', onPress: () => Linking.openSettings() },
@@ -52,7 +52,7 @@ export const permissionService = {
       } else {
         Alert.alert(
           'Quyền Thư viện Ảnh',
-          'Dola Bakery cần quyền truy cập Thư viện ảnh để chọn ảnh đại diện / tài liệu. Vui lòng cấp quyền trong Cài đặt điện thoại.',
+          'Givral Bakery cần quyền truy cập Thư viện ảnh để chọn ảnh đại diện / tài liệu. Vui lòng cấp quyền trong Cài đặt điện thoại.',
           [
             { text: 'Hủy', style: 'cancel' },
             { text: 'Mở Cài đặt', onPress: () => Linking.openSettings() },

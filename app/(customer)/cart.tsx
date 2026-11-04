@@ -7,44 +7,34 @@ import { Colors } from '@/constants/theme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-const INITIAL_CART = [
-  { id: '1', name: 'Bánh Kem Dâu Tây Fresh', price: 199000, originalPrice: 250000, quantity: 1, image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=300' },
-  { id: '2', name: 'Bánh Mì Sừng Bò Croissant', price: 35000, originalPrice: 45000, quantity: 2, image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=300' },
-  { id: '3', name: 'Bánh Su Kem Socola Bỉ', price: 90000, originalPrice: 120000, quantity: 1, image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=300' },
+import { useCart } from '@/context/CartContext';
+import { formatImageUrl } from '@/config/apiConfig';
+
+const MOCK_FALLBACK_CART = [
+  { id: '1', name: 'Bánh Kem Dâu Tây Fresh', price: 199000, quantity: 1, image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=300' },
+  { id: '2', name: 'Bánh Mì Sừng Bò Croissant', price: 35000, quantity: 2, image: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=300' },
 ];
 
 export default function CustomerCartPage() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { cartItems, updateQuantity, removeFromCart } = useCart();
 
-  const [cartItems, setCartItems] = useState(INITIAL_CART);
   const [voucherCode, setVoucherCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(0);
 
-  const updateQuantity = (id: string, delta: number) => {
-    setCartItems(cartItems.map(item => {
-      if (item.id === id) {
-        const newQty = Math.max(1, item.quantity + delta);
-        return { ...item, quantity: newQty };
-      }
-      return item;
-    }));
-  };
-
-  const removeItem = (id: string) => {
-    setCartItems(cartItems.filter(item => item.id !== id));
-  };
+  const displayCart = cartItems;
 
   const applyVoucher = () => {
-    if (voucherCode.toUpperCase() === 'DOLA30') {
+    if (voucherCode.toUpperCase() === 'DOLA30' || voucherCode.toUpperCase() === 'GIVRAL30') {
       setAppliedDiscount(30000);
     } else if (voucherCode.toUpperCase() === 'FREESHIP') {
       setAppliedDiscount(15000);
     }
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = displayCart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shippingFee = subtotal > 300000 ? 0 : 25000;
   const total = Math.max(0, subtotal + shippingFee - appliedDiscount);
 
@@ -55,11 +45,11 @@ export default function CustomerCartPage() {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <ThemedText style={styles.headerTitle}>Giỏ hàng ({cartItems.length})</ThemedText>
+        <ThemedText style={styles.headerTitle}>Giỏ hàng ({displayCart.length})</ThemedText>
         <View style={{ width: 40 }} />
       </View>
 
-      {cartItems.length === 0 ? (
+      {displayCart.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="cart-outline" size={80} color={colors.icon} style={{ opacity: 0.5, marginBottom: 16 }} />
           <ThemedText style={styles.emptyText}>Giỏ hàng của bạn đang trống</ThemedText>
@@ -75,14 +65,14 @@ export default function CustomerCartPage() {
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
             
             {/* CART ITEMS */}
-            {cartItems.map((item) => (
+            {displayCart.map((item) => (
               <View key={item.id} style={[styles.cartCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
-                <Image source={{ uri: item.image }} style={styles.itemImage} />
+                <Image source={{ uri: formatImageUrl(item.image) }} style={styles.itemImage} />
 
                 <View style={styles.itemDetails}>
                   <View style={styles.itemTopRow}>
                     <ThemedText style={styles.itemName} numberOfLines={1}>{item.name}</ThemedText>
-                    <TouchableOpacity onPress={() => removeItem(item.id)}>
+                    <TouchableOpacity onPress={() => removeFromCart(item.id)}>
                       <Ionicons name="trash-outline" size={18} color="#ef4444" />
                     </TouchableOpacity>
                   </View>
@@ -95,14 +85,14 @@ export default function CustomerCartPage() {
                     <View style={styles.qtyContainer}>
                       <TouchableOpacity 
                         style={[styles.qtyBtn, { borderColor: colors.cardBorder }]}
-                        onPress={() => updateQuantity(item.id, -1)}
+                        onPress={() => updateQuantity(item.id, item.quantity - 1)}
                       >
                         <Ionicons name="remove" size={14} color={colors.text} />
                       </TouchableOpacity>
                       <ThemedText style={styles.qtyText}>{item.quantity}</ThemedText>
                       <TouchableOpacity 
                         style={[styles.qtyBtn, { borderColor: colors.cardBorder }]}
-                        onPress={() => updateQuantity(item.id, 1)}
+                        onPress={() => updateQuantity(item.id, item.quantity + 1)}
                       >
                         <Ionicons name="add" size={14} color={colors.text} />
                       </TouchableOpacity>
@@ -121,7 +111,7 @@ export default function CustomerCartPage() {
               <ThemedText style={styles.sectionTitle}>Mã giảm giá / Voucher</ThemedText>
               <View style={styles.voucherInputRow}>
                 <TextInput 
-                  placeholder="Nhập mã DOLA30 hoặc FREESHIP"
+                  placeholder="Nhập mã GIVRAL30 hoặc FREESHIP"
                   placeholderTextColor={colors.icon}
                   style={[styles.voucherInput, { color: colors.text, borderColor: colors.cardBorder }]}
                   value={voucherCode}
@@ -147,7 +137,7 @@ export default function CustomerCartPage() {
               </View>
 
               <View style={styles.summaryRow}>
-                <ThemedText style={styles.summaryLabel}>Phí giao hàng (Free >300k)</ThemedText>
+                <ThemedText style={styles.summaryLabel}>Phí giao hàng (Freeship đơn từ 300k)</ThemedText>
                 <ThemedText style={styles.summaryValue}>
                   {shippingFee === 0 ? 'Miễn phí' : `${shippingFee.toLocaleString('vi-VN')}₫`}
                 </ThemedText>

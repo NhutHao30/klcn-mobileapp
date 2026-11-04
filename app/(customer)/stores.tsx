@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, FlatList, TouchableOpacity, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -6,11 +6,12 @@ import { useColorScheme } from 'react-native';
 import { Colors } from '@/constants/theme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { storeApi } from '@/services/api/storeApi';
 
-const STORE_LOCATIONS = [
+const DEFAULT_STORES = [
   {
     id: '1',
-    name: 'Dola Bakery - Trụ Sở Chính Tân Phú',
+    name: 'Givral Bakery - Trụ Sở Chính Tân Phú',
     address: '140 Lê Trọng Tấn, P. Tây Thạnh, Q. Tân Phú, TP.HCM',
     phone: '0987.654.321',
     hours: '07:30 - 22:00',
@@ -18,7 +19,7 @@ const STORE_LOCATIONS = [
   },
   {
     id: '2',
-    name: 'Dola Bakery - Chi Nhánh Quận 1',
+    name: 'Givral Bakery - Chi Nhánh Quận 1',
     address: '88 Nguyễn Trãi, P. Bến Thành, Quận 1, TP.HCM',
     phone: '0987.654.322',
     hours: '08:00 - 22:30',
@@ -26,7 +27,7 @@ const STORE_LOCATIONS = [
   },
   {
     id: '3',
-    name: 'Dola Bakery - Chi Nhánh Quận 3',
+    name: 'Givral Bakery - Chi Nhánh Quận 3',
     address: '215 Võ Văn Tần, Phường 5, Quận 3, TP.HCM',
     phone: '0987.654.323',
     hours: '08:00 - 22:00',
@@ -38,12 +39,36 @@ export default function CustomerStoresPage() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const [storesList, setStoresList] = useState(DEFAULT_STORES);
+
+  useEffect(() => {
+    loadStores();
+  }, []);
+
+  const loadStores = async () => {
+    try {
+      const data = await storeApi.getPublicStores();
+      const items = Array.isArray(data) ? data : (data?.data || []);
+      if (items.length > 0) {
+        setStoresList(items.map((s: any, idx: number) => ({
+          id: String(s.MACUAHANG || s.id || idx + 1),
+          name: s.TENCUAHANG || s.tenCuaHang || s.TENCHINHANH || s.name || 'Chi nhánh Givral Bakery',
+          address: s.DIACHI || s.diaChiChiTiet || s.address || 'Hồ Chí Minh',
+          phone: s.SDT || s.soDienThoai || s.phone || '0987.654.321',
+          hours: '07:30 - 22:00',
+          distance: `${(1.2 + idx * 0.8).toFixed(1)} km`,
+        })));
+      }
+    } catch (e) {
+      // Fallback
+    }
+  };
 
   const callStore = (phone: string) => {
     Linking.openURL(`tel:${phone.replace(/\./g, '')}`);
   };
 
-  const renderStore = ({ item }: { item: typeof STORE_LOCATIONS[0] }) => (
+  const renderStore = ({ item }: { item: typeof DEFAULT_STORES[0] }) => (
     <View style={[styles.storeCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
       <View style={styles.storeHeader}>
         <Ionicons name="storefront-outline" size={24} color={colors.tint} style={{ marginRight: 10 }} />
@@ -54,17 +79,17 @@ export default function CustomerStoresPage() {
 
       <View style={styles.infoRow}>
         <Ionicons name="location-outline" size={18} color={colors.icon} style={{ marginRight: 8 }} />
-        <ThemedText style={styles.infoText}>{item.address}</ThemedText>
+        <ThemedText style={[styles.infoText, { color: colors.cardTextSecondary }]}>{item.address}</ThemedText>
       </View>
 
       <View style={styles.infoRow}>
         <Ionicons name="time-outline" size={18} color={colors.icon} style={{ marginRight: 8 }} />
-        <ThemedText style={styles.infoText}>Mở cửa: {item.hours}</ThemedText>
+        <ThemedText style={[styles.infoText, { color: colors.cardTextSecondary }]}>Mở cửa: {item.hours}</ThemedText>
       </View>
 
       <View style={styles.infoRow}>
         <Ionicons name="call-outline" size={18} color={colors.icon} style={{ marginRight: 8 }} />
-        <ThemedText style={styles.infoText}>{item.phone}</ThemedText>
+        <ThemedText style={[styles.infoText, { color: colors.cardTextSecondary }]}>{item.phone}</ThemedText>
       </View>
 
       <View style={styles.actionRow}>
@@ -104,8 +129,8 @@ export default function CustomerStoresPage() {
       </View>
 
       <FlatList
-        data={STORE_LOCATIONS}
-        keyExtractor={item => item.id}
+        data={storesList}
+        keyExtractor={(item: any, index: number) => `st-${item?.id || index}-${index}`}
         renderItem={renderStore}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -165,7 +190,6 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 13,
-    opacity: 0.8,
     flex: 1,
   },
   actionRow: {
@@ -200,3 +224,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+

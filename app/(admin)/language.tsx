@@ -19,7 +19,7 @@ export default function LanguageScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { language, setLanguage, t } = useLanguage();
-  const [selectedLang, setSelectedLang] = useState(language);
+  const [selectedLang, setSelectedLang] = useState<'vi' | 'en'>(language);
 
   const handleApply = () => {
     setLanguage(selectedLang as any);
@@ -50,7 +50,7 @@ export default function LanguageScreen() {
             <React.Fragment key={lang.id}>
               <TouchableOpacity 
                 style={styles.langRow}
-                onPress={() => setSelectedLang(lang.id)}
+                onPress={() => setSelectedLang(lang.id as 'vi' | 'en')}
               >
                 <View style={styles.langInfo}>
                   <ThemedText style={styles.langFlag}>{lang.flag}</ThemedText>

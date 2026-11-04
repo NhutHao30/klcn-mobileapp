@@ -10,23 +10,23 @@ import { ThemedView } from '@/components/themed-view';
 const FAQS = [
   {
     id: '1',
-    question: 'Bánh tại Dola Bakery được bảo quản như thế nào?',
+    question: 'Bánh tại Givral Bakery được bảo quản như thế nào?',
     answer: 'Bánh kem và bánh su kem tươi khuyến khích bảo quản trong ngăn mát tủ lạnh từ 2°C - 5°C. Bánh sẽ giữ được độ ngon và độ mịn tốt nhất trong vòng 48 giờ kể từ khi mua.'
   },
   {
     id: '2',
     question: 'Tôi cần đặt bánh sinh nhật trước bao nhiêu lâu?',
-    answer: 'Để Dola Bakery chuẩn bị trang trí bánh tỉ mỉ nhất theo đúng mẫu mã yêu cầu, bạn vui lòng đặt trước từ 2 đến 4 tiếng đối với mẫu có sẵn, hoặc 24 tiếng đối với mẫu bánh thiết kế riêng.'
+    answer: 'Để Givral Bakery chuẩn bị trang trí bánh tỉ mỉ nhất theo đúng mẫu mã yêu cầu, bạn vui lòng đặt trước từ 2 đến 4 tiếng đối với mẫu có sẵn, hoặc 24 tiếng đối với mẫu bánh thiết kế riêng.'
   },
   {
     id: '3',
     question: 'Chính sách miễn phí giao hàng (Freeship) ra sao?',
-    answer: 'Dola Bakery áp dụng miễn phí vận chuyển 100% cho mọi đơn hàng bánh từ 300.000₫ trở lên trong bán kính 10km tại khu vực TP.HCM.'
+    answer: 'Givral Bakery áp dụng miễn phí vận chuyển 100% cho mọi đơn hàng bánh từ 300.000₫ trở lên trong bán kính 10km tại khu vực TP.HCM.'
   },
   {
     id: '4',
     question: 'Nếu bánh giao bị hỏng hoặc sai mẫu thì phải làm sao?',
-    answer: 'Trường hợp bánh bị dập nát hoặc không đúng với mô tả lúc đặt, Dola Bakery sẽ hỗ trợ đổi trả bánh mới lập tức trong ngày hoặc hoàn tiền 100% qua hotline 19006750.'
+    answer: 'Trường hợp bánh bị dập nát hoặc không đúng với mô tả lúc đặt, Givral Bakery sẽ hỗ trợ đổi trả bánh mới lập tức trong ngày hoặc hoàn tiền 100% qua hotline 19006750.'
   },
   {
     id: '5',
@@ -72,7 +72,7 @@ export default function FAQPage() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
         <ThemedText style={styles.subtitle}>
-          Giải đáp các thắc mắc phổ biến về dịch vụ đặt bánh, giao hàng và bảo quản tại Dola Bakery.
+          Giải đáp các thắc mắc phổ biến về dịch vụ đặt bánh, giao hàng và bảo quản tại Givral Bakery.
         </ThemedText>
 
         {FAQS.map(faq => {

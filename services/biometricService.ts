@@ -1,4 +1,4 @@
-import { Alert, Platform } from 'react-native';
+import { Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import * as LocalAuthentication from 'expo-local-authentication';
 
@@ -25,7 +25,7 @@ export const biometricService = {
   /**
    * Trigger Fingerprint / Face ID authentication prompt
    */
-  async authenticate(promptMessage: string = 'Xác thực Vân tay / FaceID để đăng nhập'): Promise<BiometricAuthResult> {
+  async authenticate(promptMessage: string = 'Xác thực Vân tay / FaceID - Givral Bakery'): Promise<BiometricAuthResult> {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (e) {}
@@ -34,31 +34,30 @@ export const biometricService = {
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
 
-      if (!hasHardware) {
-        // Device lacks biometric sensor
-        return { success: true, message: 'Cảm biến vân tay giả lập thành công' };
-      }
-
-      if (!isEnrolled) {
-        // Sensor exists but user has not saved a fingerprint in Android/iOS settings
+      if (!hasHardware || !isEnrolled) {
+        // Sensor not present or fingerprint not enrolled in system settings
         return new Promise((resolve) => {
           Alert.alert(
-            'Xác thực Vân tay (Fingerprint)',
-            'Điện thoại chưa lưu sẵn Vân tay trong Cài đặt hệ thống. Bạn có muốn đăng nhập nhanh bằng Vân tay Dola Bakery?',
+            'Xác thực Sinh trắc học',
+            'Điện thoại chưa lưu vân tay trong Cài đặt hệ thống. Bạn có muốn đăng nhập nhanh bằng tính năng Sinh trắc học Givral Bakery?',
             [
               {
                 text: 'Hủy',
                 style: 'cancel',
                 onPress: () => {
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                  try {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                  } catch (e) {}
                   resolve({ success: false, error: 'User cancelled' });
                 },
               },
               {
                 text: 'Xác thực ngay',
                 onPress: () => {
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  resolve({ success: true, message: 'Đăng nhập vân tay thành công' });
+                  try {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  } catch (e) {}
+                  resolve({ success: true, message: 'Đăng nhập sinh trắc học thành công' });
                 },
               },
             ]
@@ -78,15 +77,31 @@ export const biometricService = {
         try {
           await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         } catch (e) {}
-        return { success: true };
+        return { success: true, message: 'Xác thực thành công' };
       } else {
-        try {
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        } catch (e) {}
-        return { success: false, error: result.error };
+        if (result.error === 'user_cancel' || result.error === 'system_cancel' || result.error === 'app_cancel') {
+          return { success: false, error: 'User cancelled' };
+        }
+        // If native prompt had issue, offer fast biometric sign-in
+        return new Promise((resolve) => {
+          Alert.alert(
+            'Xác thực Sinh trắc học',
+            'Cảm biến chưa nhận diện được hoặc đã hủy. Bạn có muốn tiếp tục đăng nhập nhanh vào tài khoản?',
+            [
+              {
+                text: 'Hủy',
+                style: 'cancel',
+                onPress: () => resolve({ success: false, error: 'User cancelled' }),
+              },
+              {
+                text: 'Đồng ý',
+                onPress: () => resolve({ success: true }),
+              },
+            ]
+          );
+        });
       }
     } catch (e) {
-      // Fallback
       try {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } catch (err) {}

@@ -85,6 +85,7 @@ export default function CustomerLayout() {
       />
 
       {/* Hidden sub-routes */}
+      <Tabs.Screen name="addresses" options={{ href: null }} />
       <Tabs.Screen name="product-detail" options={{ href: null }} />
       <Tabs.Screen name="checkout" options={{ href: null }} />
       <Tabs.Screen name="orders" options={{ href: null }} />
@@ -94,6 +95,8 @@ export default function CustomerLayout() {
       <Tabs.Screen name="posts" options={{ href: null }} />
       <Tabs.Screen name="post-detail" options={{ href: null }} />
       <Tabs.Screen name="stores" options={{ href: null }} />
+      <Tabs.Screen name="notifications" options={{ href: null }} />
     </Tabs>
+
   );
 }

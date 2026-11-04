@@ -36,7 +36,7 @@ export default function CustomerNavDrawer({ visible, onClose }: CustomerNavDrawe
     { title: t('about_us'), icon: 'information-circle-outline', route: '/(customer)/about', color: '#10b981' },
     { title: t('contact_us'), icon: 'call-outline', route: '/(customer)/contact', color: '#8b5cf6' },
     { title: t('faq'), icon: 'help-circle-outline', route: '/(customer)/faq', color: '#ec4899' },
-    { title: 'Trang Quản trị Admin', icon: 'shield-checkmark-outline', route: '/(admin)', color: '#ef4444' },
+
   ];
 
   return (
@@ -57,7 +57,7 @@ export default function CustomerNavDrawer({ visible, onClose }: CustomerNavDrawe
           <View style={[styles.drawerHeader, { backgroundColor: colors.headerBg }]}>
             <View style={styles.brandGroup}>
               <Ionicons name="restaurant" size={26} color="#fff" style={{ marginRight: 8 }} />
-              <ThemedText style={styles.brandTitle}>DOLA BAKERY</ThemedText>
+              <ThemedText style={styles.brandTitle}>GIVRAL BAKERY</ThemedText>
             </View>
 
             <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
@@ -86,7 +86,7 @@ export default function CustomerNavDrawer({ visible, onClose }: CustomerNavDrawe
             <View style={[styles.promoBox, { backgroundColor: colors.tint + '15', borderColor: colors.tint + '40' }]}>
               <Ionicons name="gift-outline" size={24} color={colors.tint} style={{ marginBottom: 6 }} />
               <ThemedText style={[styles.promoTitle, { color: colors.tint }]}>Ưu Đãi Độc Quyền App</ThemedText>
-              <ThemedText style={styles.promoDesc}>Nhập mã DOLA30 giảm 30.000₫ cho mọi đơn hàng từ 150.000₫</ThemedText>
+              <ThemedText style={styles.promoDesc}>Nhập mã GIVRAL30 giảm 30.000₫ cho mọi đơn hàng từ 150.000₫</ThemedText>
             </View>
 
           </ScrollView>

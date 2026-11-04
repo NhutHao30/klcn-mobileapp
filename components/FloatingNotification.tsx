@@ -8,7 +8,7 @@ import { soundService } from '@/services/soundService';
 
 interface FloatingNotificationProps {
   visible: boolean;
-  title: string;
+  title?: string;
   message: string;
   type?: 'success' | 'info' | 'warning' | 'error';
   onClose: () => void;
@@ -16,7 +16,7 @@ interface FloatingNotificationProps {
 
 export default function FloatingNotification({
   visible,
-  title,
+  title = 'Thông báo 🥐',
   message,
   type = 'success',
   onClose,

@@ -7,18 +7,21 @@ import { Colors } from '@/constants/theme';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useCustomTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 
 const SETTINGS_MENU = [
   {
-    title: 'Hồ sơ cá nhân',
+    title: 'Hồ sơ cá nhân & Ký số',
     items: [
       { id: 'profile', title: 'Thông tin cá nhân', icon: 'person-outline', route: '/(admin)/profile' },
+      { id: 'signature-approval', title: 'Duyệt & Ký số biên bản', icon: 'finger-print-outline', route: '/(admin)/signature-approval' },
       { id: 'security', title: 'Bảo mật & Mật khẩu', icon: 'shield-checkmark-outline', route: '/(admin)/security' },
     ]
   },
   {
-    title: 'Quản trị hệ thống',
+    title: 'Quản trị hệ thống & Bảo trì',
     items: [
+      { id: 'feature-lock', title: 'Khóa bảo trì tính năng', icon: 'lock-closed-outline', route: '/(admin)/feature-lock' },
       { id: 'audit', title: 'Nhật ký hoạt động (Audit)', icon: 'list-outline', route: '/(admin)/audit' },
       { id: 'roles', title: 'Phân quyền nhân viên', icon: 'key-outline', route: '/(admin)/roles' },
       { id: 'branches', title: 'Quản lý chi nhánh', icon: 'storefront-outline', route: '/(admin)/stores' },
@@ -37,6 +40,86 @@ const SETTINGS_MENU = [
 export default function AdminSettings() {
   const router = useRouter();
   const { colors, toggleTheme } = useCustomTheme();
+  const { user, profile, role, logout } = useAuth();
+
+  const vaiTroId = Number(
+    user?.vaiTroId || user?.role_id || (user?.vaitro ? user?.vaitro.id : 0) || profile?.roleId || 0
+  );
+  const userRole = Number(
+    user?.MAROLE !== undefined ? user?.MAROLE : (user?.QUYEN !== undefined ? user?.QUYEN : role)
+  );
+
+  const isAdmin = vaiTroId === 1 || userRole === 0;
+  const isDirector = vaiTroId === 8 || userRole === 5;
+  const isManager = vaiTroId === 2 || userRole === 1;
+  const isWarehouse = vaiTroId === 4;
+  const isAccountant = vaiTroId === 7 || userRole === 6;
+  const canSign = !isAdmin && (isDirector || isManager || isWarehouse || isAccountant);
+
+  const displayName =
+    profile?.fullName || user?.nguoidung?.hoTen || user?.HOTEN || user?.name || user?.username || 'Nhân viên';
+  const displayEmail = profile?.email || user?.email || user?.EMAIL || 'user@givralbakery.com.vn';
+  const displayRole =
+    profile?.roleLabel || user?.vaitro?.tenVaiTro || (isAdmin ? 'Quản trị viên Hệ thống' : 'Nhân viên Givral Bakery');
+  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    displayName
+  )}&background=d97706&color=fff&bold=true`;
+
+  const filteredMenu = [
+    {
+      title: 'Hồ sơ cá nhân & Ký số',
+      items: [
+        { id: 'profile', title: 'Thông tin cá nhân', icon: 'person-outline', route: '/(admin)/profile' },
+        ...(canSign
+          ? [
+              {
+                id: 'signature-manage',
+                title: 'Quản lý Chữ ký Số cá nhân',
+                icon: 'create-outline',
+                route: '/(admin)/profile',
+              },
+              {
+                id: 'signature-approval',
+                title: 'Duyệt & Ký số biên bản',
+                icon: 'finger-print-outline',
+                route: '/(admin)/signature-approval',
+              },
+            ]
+          : []),
+        { id: 'security', title: 'Bảo mật & Mật khẩu', icon: 'shield-checkmark-outline', route: '/(admin)/security' },
+      ],
+    },
+    ...(isAdmin
+      ? [
+          {
+            title: 'Quản trị hệ thống & Bảo mật (Dành riêng Admin)',
+            items: [
+              {
+                id: 'feature-lock',
+                title: 'Khóa bảo trì tính năng',
+                icon: 'lock-closed-outline',
+                route: '/(admin)/feature-lock',
+              },
+              { id: 'audit', title: 'Nhật ký hoạt động (Audit Logs)', icon: 'list-outline', route: '/(admin)/audit' },
+              {
+                id: 'roles',
+                title: 'Quản trị tài khoản & Phân quyền',
+                icon: 'key-outline',
+                route: '/(admin)/roles',
+              },
+            ],
+          },
+        ]
+      : []),
+    {
+      title: 'Cài đặt ứng dụng',
+      items: [
+        { id: 'notifications', title: 'Thông báo', icon: 'notifications-outline', route: '/(admin)/notifications' },
+        { id: 'appearance', title: 'Giao diện (Sáng/Tối)', icon: 'moon-outline' },
+        { id: 'language', title: 'Ngôn ngữ', icon: 'language-outline', route: '/(admin)/language' },
+      ],
+    },
+  ];
 
   const handleMenuPress = (item: any) => {
     if (item.id === 'appearance') {
@@ -46,13 +129,18 @@ export default function AdminSettings() {
     }
   };
 
-  const handleLogout = () => {
-    router.replace('/');
+  const handleLogout = async () => {
+    try {
+      if (logout) {
+        await logout();
+      }
+    } catch (e) {}
+    router.replace('/login');
   };
 
   return (
     <ThemedView style={styles.container}>
-      <View style={{ paddingTop: 40, backgroundColor: colors.headerBg }}>
+      <View style={{ paddingTop: 40, backgroundColor: '#d97706' }}>
         <ThemedText style={{ color: '#fff', fontSize: 20, fontWeight: 'bold', padding: 16 }}>Cài đặt</ThemedText>
       </View>
       
@@ -60,21 +148,21 @@ export default function AdminSettings() {
         {/* Profile Header */}
         <View style={styles.profileHeader}>
           <Image 
-            source={{ uri: 'https://ui-avatars.com/api/?name=Admin+Dola&background=f59e0b&color=fff' }} 
+            source={{ uri: avatarUrl }} 
             style={styles.avatar} 
           />
           <View style={styles.profileInfo}>
-            <ThemedText style={styles.profileName}>Dola Bakery Admin</ThemedText>
-            <ThemedText style={styles.profileEmail}>admin@dolabakery.com</ThemedText>
-            <View style={[styles.roleBadge, { backgroundColor: colors.tint + '20' }]}>
-              <ThemedText style={[styles.roleText, { color: colors.tint }]}>Quản lý cấp cao</ThemedText>
+            <ThemedText style={styles.profileName}>{displayName}</ThemedText>
+            <ThemedText style={styles.profileEmail}>{displayEmail}</ThemedText>
+            <View style={[styles.roleBadge, { backgroundColor: '#d97706' + '20' }]}>
+              <ThemedText style={[styles.roleText, { color: '#d97706' }]}>{displayRole}</ThemedText>
             </View>
           </View>
         </View>
 
         {/* Menu Sections */}
-        {SETTINGS_MENU.map((section, index) => (
-          <View key={index} style={styles.menuSection}>
+        {filteredMenu.map((section, index) => (
+          <View key={'section-' + index} style={styles.menuSection}>
             <ThemedText style={styles.sectionTitle}>{section.title}</ThemedText>
             <View style={[styles.menuCard, { backgroundColor: colors.background, borderColor: colors.icon + '20' }]}>
               {section.items.map((item, itemIndex) => (
