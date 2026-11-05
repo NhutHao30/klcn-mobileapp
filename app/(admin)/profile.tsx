@@ -67,7 +67,7 @@ export default function ProfileScreen() {
     }
   }, [profile]);
 
-  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+  const avatarUrl = (user as any)?.avatar || (user as any)?.nguoidung?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(
     profile?.fullName || 'Givral Bakery'
   )}&background=d97706&color=fff&bold=true`;
 

@@ -45,22 +45,21 @@ export default function AdminSignatureApprovalScreen() {
   // vaiTroId = 2 (Quản lý CN) -> vaiTroKy = 3
   // vaiTroId = 4 (Nhân viên kho) -> vaiTroKy = 2
   // vaiTroId = 7 (Kế toán) -> vaiTroKy = 1
+  // Admin & Giám đốc: Không tham gia ký chứng từ chi nhánh
   const currentUserSignSlot: 1 | 2 | 3 | null = isManager
     ? 3
     : isWarehouse
     ? 2
     : isAccountant
     ? 1
-    : isDirector
-    ? 3
     : null;
 
   const getSignerRoleLabel = () => {
     if (isAdmin) return 'Quản trị viên Hệ thống (Không được phép ký số)';
+    if (isDirector) return 'Ban Giám Đốc (Giám sát & phê duyệt yêu cầu nhập hàng)';
     if (isManager) return 'Quản lý Chi nhánh (Chốt duyệt hoàn tất ngay - Slot 3)';
     if (isWarehouse) return 'Nhân viên Kho (Ký xác nhận thực nhận - Slot 2)';
     if (isAccountant) return 'Nhân viên Kế toán (Ký đối soát tài chính - Slot 1)';
-    if (isDirector) return 'Ban Giám Đốc (Thẩm quyền phê duyệt)';
     return 'Nhân sự nội bộ';
   };
 
@@ -191,10 +190,12 @@ export default function AdminSignatureApprovalScreen() {
 
   const handleSignConfirm = async () => {
     if (!selectedDoc) return;
-    if (isAdmin) {
+    if (isAdmin || isDirector) {
       Alert.alert(
         'Từ chối truy cập',
-        'Role Admin không được phép tham gia vào việc ký duyệt chứng từ theo quy định bảo mật.'
+        isAdmin
+          ? 'Role Admin không được phép tham gia vào việc ký duyệt chứng từ theo quy định bảo mật.'
+          : 'Ban Giám Đốc chỉ giám sát và duyệt yêu cầu nhập hàng, không trực tiếp ký chứng từ chi nhánh.'
       );
       return;
     }

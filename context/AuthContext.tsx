@@ -123,7 +123,7 @@ const buildProfile = (u: User | null): UserProfile | null => {
     storeId: nd?.cuaHangId ?? nd?.MACUAHANG ?? nd?.cuahang?.id ?? nd?.cuahang?.MACUAHANG ?? (roleId === 2 ? 1 : null),
     roleId,
     roleLabel,
-    signature: nd?.chuKySo || (u as any)?.chuKySo || null,
+    signature: nd?.chuKySo || nd?.chuKy || (u as any)?.chuKySo || (u as any)?.chuKy || null,
   };
 };
 
