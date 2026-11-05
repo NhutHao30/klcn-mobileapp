@@ -101,6 +101,7 @@ export default function CustomerLayout() {
       <Tabs.Screen name="post-detail" options={{ href: null }} />
       <Tabs.Screen name="stores" options={{ href: null }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
+      <Tabs.Screen name="chat" options={{ href: null }} />
     </Tabs>
 
   );

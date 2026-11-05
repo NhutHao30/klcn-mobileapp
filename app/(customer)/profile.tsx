@@ -768,6 +768,22 @@ export default function CustomerProfilePage() {
         <ThemedText style={styles.sectionHeaderTitle}>Cài đặt & Ứng dụng</ThemedText>
 
         <View style={[styles.menuCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+          {/* CSKH & CHATBOT AI */}
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(customer)/chat')}>
+            <View style={[styles.iconBg, { backgroundColor: '#d9770615' }]}>
+              <Ionicons name="chatbubbles-outline" size={20} color="#d97706" />
+            </View>
+            <ThemedText style={[styles.menuTitle, { fontWeight: '700', color: '#d97706' }]}>
+              Hỗ trợ trực tuyến & Trợ lý Givral AI
+            </ThemedText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#22c55e' }} />
+              <Ionicons name="chevron-forward" size={20} color={colors.icon} />
+            </View>
+          </TouchableOpacity>
+
+          <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+
           {/* LIGHT / DARK MODE */}
           <TouchableOpacity style={styles.menuItem} onPress={toggleTheme}>
             <View style={[styles.iconBg, { backgroundColor: colors.tint + '15' }]}>

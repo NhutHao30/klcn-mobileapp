@@ -573,6 +573,16 @@ export default function CustomerHomePage() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* FLOATING CHAT CSKH & BOT AI */}
+      <TouchableOpacity
+        style={styles.floatingChatBtn}
+        onPress={() => router.push('/(customer)/chat')}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="chatbubbles" size={26} color="#ffffff" />
+        <View style={styles.floatingChatBadge} />
+      </TouchableOpacity>
     </ThemedView>
   );
 }
@@ -1012,6 +1022,34 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 13,
     fontWeight: 'bold',
+  },
+  floatingChatBtn: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#d97706',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 8,
+    shadowColor: '#b45309',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    zIndex: 999,
+  },
+  floatingChatBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#22c55e',
+    borderWidth: 2,
+    borderColor: '#ffffff',
   },
 });
 
