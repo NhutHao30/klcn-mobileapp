@@ -92,7 +92,18 @@ export default function CustomerChatPage() {
       try {
         const latestMsgs = await chatApi.getMessages(conversationId);
         if (Array.isArray(latestMsgs) && latestMsgs.length > 0) {
-          setMessages(latestMsgs);
+          setMessages(prev => {
+            const serverTexts = new Set(
+              latestMsgs
+                .filter(m => m.nguoiGuiType === 'khachhang' || m.nguoiGuiType === 0)
+                .map(m => (m.noiDung || '').trim())
+            );
+            const pendingTemps = prev.filter(m => 
+              typeof m.id === 'number' && m.id > 1700000000000 &&
+              !serverTexts.has((m.noiDung || '').trim())
+            );
+            return [...latestMsgs, ...pendingTemps];
+          });
         }
       } catch (e) {
         // im lặng bỏ qua lỗi polling
@@ -145,16 +156,15 @@ export default function CustomerChatPage() {
 
     try {
       const res = await chatApi.sendMessage(conversationId, text);
-      // Nếu server trả về phản hồi từ Trợ lý AI (bot_reply)
-      if (res?.bot_reply) {
-        setMessages((prev) => [...prev, res.bot_reply]);
-      } else {
-        // Tải lại tin nhắn mới nhất
-        const refreshed = await chatApi.getMessages(conversationId);
-        if (Array.isArray(refreshed) && refreshed.length > 0) {
-          setMessages(refreshed);
+      setMessages((prev) => {
+        const withoutTemp = prev.filter(m => m.id !== tempId);
+        const serverMsg = res?.data || res;
+        const list = withoutTemp.some(m => m.id === serverMsg.id) ? withoutTemp : [...withoutTemp, serverMsg];
+        if (res?.bot_reply) {
+          return list.some(m => m.id === res.bot_reply.id) ? list : [...list, res.bot_reply];
         }
-      }
+        return list;
+      });
     } catch (err: any) {
       console.error('Send message error:', err);
       Alert.alert('Lỗi', 'Không thể gửi tin nhắn. Vui lòng kiểm tra lại kết nối!');
