@@ -294,8 +294,8 @@ export default function CustomerChatPage() {
       {/* CHAT BODY */}
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 24}
       >
         {loading ? (
           <View style={styles.centerContainer}>
@@ -311,6 +311,7 @@ export default function CustomerChatPage() {
             keyExtractor={(item, index) => String(item.id || index)}
             renderItem={renderMessageItem}
             contentContainerStyle={styles.listContent}
+            keyboardShouldPersistTaps="handled"
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <View style={styles.welcomeCard}>
@@ -320,9 +321,6 @@ export default function CustomerChatPage() {
                   </ThemedText>
                   <ThemedText style={styles.welcomeSub}>
                     Givral Bakery luôn sẵn sàng hỗ trợ bạn chọn loại bánh ưng ý, tra cứu địa chỉ chi nhánh hoặc theo dõi đơn hàng.
-                  </ThemedText>
-                  <ThemedText style={styles.welcomeHint}>
-                    💡 Bạn có thể hỏi: "Có bánh kem sinh nhật nào?", "Địa chỉ tiệm ở đâu?", "Phí giao hàng tính thế nào?"...
                   </ThemedText>
                 </View>
               </View>
@@ -486,14 +484,6 @@ const styles = StyleSheet.create({
     color: '#78350f',
     textAlign: 'center',
     lineHeight: 18,
-    marginBottom: 10,
-  },
-  welcomeHint: {
-    fontSize: 12,
-    color: '#b45309',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    lineHeight: 16,
   },
   messageRow: {
     flexDirection: 'row',
@@ -569,3 +559,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
