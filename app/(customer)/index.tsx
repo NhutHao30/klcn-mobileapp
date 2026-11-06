@@ -233,21 +233,23 @@ export default function CustomerHomePage() {
         <View style={styles.imageContainer}>
           <Image source={{ uri: item.image }} style={styles.productImage} />
           
-          {item.isOutOfStock ? (
-            <View style={[styles.saleBadge, { backgroundColor: '#dc2626' }]}>
-              <ThemedText style={styles.saleBadgeText}>Hết hàng</ThemedText>
-            </View>
-          ) : item.discount > 0 ? (
-            <View style={styles.saleBadge}>
-              <ThemedText style={styles.saleBadgeText}>-{item.discount}%</ThemedText>
-            </View>
-          ) : null}
+          <View style={styles.badgesContainer}>
+            {item.isNew && (
+              <View style={styles.newBadge}>
+                <ThemedText style={styles.newBadgeText}>NEW 🌟</ThemedText>
+              </View>
+            )}
 
-          {item.isNew && (
-            <View style={styles.newBadge}>
-              <ThemedText style={styles.newBadgeText}>NEW 🌟</ThemedText>
-            </View>
-          )}
+            {item.isOutOfStock ? (
+              <View style={[styles.saleBadge, { backgroundColor: '#dc2626' }]}>
+                <ThemedText style={styles.saleBadgeText}>Hết hàng</ThemedText>
+              </View>
+            ) : item.discount > 0 ? (
+              <View style={styles.saleBadge}>
+                <ThemedText style={styles.saleBadgeText}>-{item.discount}%</ThemedText>
+              </View>
+            ) : null}
+          </View>
 
           <TouchableOpacity 
             style={styles.heartBtn}
@@ -820,14 +822,26 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  saleBadge: {
+  badgesContainer: {
     position: 'absolute',
     top: 8,
     left: 8,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 4,
+    zIndex: 10,
+  },
+  saleBadge: {
     backgroundColor: '#ef4444',
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 3,
-    borderRadius: 8,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
   },
   saleBadgeText: {
     color: '#fff',
@@ -835,13 +849,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   newBadge: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
     backgroundColor: '#10b981',
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 3,
-    borderRadius: 8,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
   },
   newBadgeText: {
     color: '#fff',
