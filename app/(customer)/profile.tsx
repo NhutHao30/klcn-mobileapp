@@ -211,10 +211,16 @@ export default function CustomerProfilePage() {
     `https://ui-avatars.com/api/?name=${encodeURIComponent(displayFullName)}&background=f59e0b&color=fff`;
 
   const handleOpenEditModal = () => {
+    let initialBirth = '';
+    if (displayBirthDate) {
+      const bStr = String(displayBirthDate).trim();
+      const m = bStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      initialBirth = m ? `${m[3]}/${m[2]}/${m[1]}` : bStr.slice(0, 10);
+    }
     setEditForm({
       hoTen: displayFullName === 'Khách hàng Givral Bakery' ? '' : displayFullName,
       soDienThoai: displayPhone,
-      ngaySinh: displayBirthDate ? String(displayBirthDate).slice(0, 10) : '',
+      ngaySinh: initialBirth,
       diaChi: displayAddress,
     });
     setEditModalVisible(true);

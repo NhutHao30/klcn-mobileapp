@@ -10,7 +10,7 @@ import {
   Alert,
   PanResponder,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, SvgXml } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'react-native';
@@ -24,6 +24,58 @@ interface Point {
   x: number;
   y: number;
 }
+
+const getSvgXml = (sig: string | null): string | null => {
+  if (!sig) return null;
+  const trimmed = sig.trim();
+  if (trimmed.startsWith('<svg') || (trimmed.includes('<svg') && trimmed.includes('</svg>'))) {
+    const start = trimmed.indexOf('<svg');
+    const end = trimmed.lastIndexOf('</svg>') + 6;
+    return trimmed.slice(start, end);
+  }
+  if (trimmed.startsWith('data:image/svg+xml;utf8,')) {
+    try {
+      return decodeURIComponent(trimmed.replace('data:image/svg+xml;utf8,', ''));
+    } catch {
+      return trimmed.replace('data:image/svg+xml;utf8,', '');
+    }
+  }
+  if (trimmed.startsWith('data:image/svg+xml,')) {
+    try {
+      return decodeURIComponent(trimmed.replace('data:image/svg+xml,', ''));
+    } catch {
+      return trimmed.replace('data:image/svg+xml,', '');
+    }
+  }
+  if (trimmed.startsWith('data:image/svg+xml;base64,')) {
+    try {
+      const b64 = trimmed.replace('data:image/svg+xml;base64,', '');
+      if (typeof atob === 'function') {
+        return atob(b64);
+      }
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+      let str = '';
+      let i = 0;
+      const cleanB64 = b64.replace(/[^A-Za-z0-9+/=]/g, '');
+      while (i < cleanB64.length) {
+        const enc1 = chars.indexOf(cleanB64.charAt(i++));
+        const enc2 = chars.indexOf(cleanB64.charAt(i++));
+        const enc3 = chars.indexOf(cleanB64.charAt(i++));
+        const enc4 = chars.indexOf(cleanB64.charAt(i++));
+        const chr1 = (enc1 << 2) | (enc2 >> 4);
+        const chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+        const chr3 = ((enc3 & 3) << 6) | enc4;
+        str += String.fromCharCode(chr1);
+        if (enc3 !== 64 && enc3 !== -1) str += String.fromCharCode(chr2);
+        if (enc4 !== 64 && enc4 !== -1) str += String.fromCharCode(chr3);
+      }
+      return str;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -48,6 +100,7 @@ export default function ProfileScreen() {
   const [currentStroke, setCurrentStroke] = useState<Point[]>([]);
   const [isSavingSignature, setIsSavingSignature] = useState(false);
   const [isDrawingOpen, setIsDrawingOpen] = useState(false);
+  const [canvasSize, setCanvasSize] = useState({ width: 340, height: 150 });
 
   // Lấy dữ liệu mới nhất khi mở màn hình
   useEffect(() => {
@@ -87,12 +140,17 @@ export default function ProfileScreen() {
 
     let ngaySinh: string | undefined;
     if (birthDate.trim()) {
-      const m = birthDate.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-      if (!m) {
+      const trimmed = birthDate.trim();
+      const dmy = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      const ymd = trimmed.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+      if (dmy) {
+        ngaySinh = `${dmy[3]}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`;
+      } else if (ymd) {
+        ngaySinh = `${ymd[1]}-${ymd[2].padStart(2, '0')}-${ymd[3].padStart(2, '0')}`;
+      } else {
         Alert.alert('Thông báo', 'Ngày sinh phải theo dạng dd/mm/yyyy.');
         return;
       }
-      ngaySinh = `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
     }
 
     try {
@@ -197,7 +255,9 @@ export default function ProfileScreen() {
 
     const paths = allStrokes.map(pointsToSmoothPath).filter(Boolean);
     const pathD = paths.join(' ');
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 160" width="320" height="160"><path d="${pathD}" fill="none" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>`;
+    const w = canvasSize.width || 340;
+    const h = canvasSize.height || 150;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}"><path d="${pathD}" fill="none" stroke="#0F172A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg>`;
   };
 
   const handleSaveSignature = async () => {
@@ -357,11 +417,25 @@ export default function ProfileScreen() {
             <View style={styles.existingSignatureBox}>
               <ThemedText style={styles.signaturePreviewLabel}>Mẫu chữ ký số đã đăng ký:</ThemedText>
               <View style={styles.signatureImagePreviewWrap}>
-                <Image
-                  source={{ uri: existingSignature }}
-                  style={styles.signaturePreviewImg}
-                  resizeMode="contain"
-                />
+                {(() => {
+                  const svgXml = getSvgXml(existingSignature);
+                  if (svgXml) {
+                    return (
+                      <SvgXml
+                        xml={svgXml}
+                        width="100%"
+                        height="100%"
+                      />
+                    );
+                  }
+                  return (
+                    <Image
+                      source={{ uri: existingSignature }}
+                      style={styles.signaturePreviewImg}
+                      resizeMode="contain"
+                    />
+                  );
+                })()}
               </View>
               <View style={styles.signatureStatusRow}>
                 <Ionicons name="checkmark-circle" size={16} color="#16A34A" />
@@ -393,6 +467,12 @@ export default function ProfileScreen() {
 
               <View
                 style={styles.signatureCanvas}
+                onLayout={(e) => {
+                  const { width, height } = e.nativeEvent.layout;
+                  if (width > 0 && height > 0) {
+                    setCanvasSize({ width: Math.round(width), height: Math.round(height) });
+                  }
+                }}
                 {...panResponder.panHandlers}
               >
                 <Svg style={StyleSheet.absoluteFill}>
@@ -400,8 +480,8 @@ export default function ProfileScreen() {
                     <Path
                       key={`stroke-${idx}`}
                       d={pointsToSmoothPath(s)}
-                      stroke="#1E293B"
-                      strokeWidth={2.5}
+                      stroke="#0F172A"
+                      strokeWidth={2.8}
                       fill="none"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -410,8 +490,8 @@ export default function ProfileScreen() {
                   {currentStroke.length > 0 && (
                     <Path
                       d={pointsToSmoothPath(currentStroke)}
-                      stroke="#1E293B"
-                      strokeWidth={2.5}
+                      stroke="#0F172A"
+                      strokeWidth={2.8}
                       fill="none"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -617,14 +697,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   signatureImagePreviewWrap: {
-    height: 100,
+    height: 110,
     backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
+    padding: 8,
   },
   signaturePreviewImg: {
     width: '90%',

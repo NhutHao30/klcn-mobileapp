@@ -99,8 +99,24 @@ const getRoleId = (u: User | null): number | null => {
 
 const formatDate = (raw?: string | null): string => {
   if (!raw) return '';
-  const m = String(raw).match(/^(\d{4})-(\d{2})-(\d{2})/);
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : String(raw);
+  const str = String(raw).trim();
+  // If already dd/mm/yyyy
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+    const parts = str.split('/');
+    return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+  }
+  // If ISO string with timezone like 2000-12-31T17:00:00.000000Z, convert from UTC to local
+  if (str.includes('T') && (str.endsWith('Z') || str.includes('+'))) {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+  }
+  const m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : str;
 };
 
 /** Backend trả TaiKhoan { username, email, vaiTroId, vaitro, nguoidung: { hoTen, soDienThoai, ngaySinh, cuahang } } */
@@ -118,7 +134,7 @@ const buildProfile = (u: User | null): UserProfile | null => {
     username: u.username ?? u.USERNAME ?? '',
     email: u.email ?? u.EMAIL ?? '',
     phone: nd?.soDienThoai ?? u.SDT ?? '',
-    birthDate: formatDate(nd?.ngaySinh),
+    birthDate: formatDate(nd?.ngaySinh || nd?.NGAYSINH),
     storeName: nd?.cuahang?.tenCuaHang ?? (roleId === 2 ? 'Chi nhánh 1 - Trụ sở chính' : ''),
     storeId: nd?.cuaHangId ?? nd?.MACUAHANG ?? nd?.cuahang?.id ?? nd?.cuahang?.MACUAHANG ?? (roleId === 2 ? 1 : null),
     roleId,
