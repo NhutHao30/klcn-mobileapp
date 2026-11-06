@@ -106,7 +106,14 @@ export const addressApi = {
   async getProvinces(): Promise<GhnProvince[]> {
     try {
       const response = await apiClient.get('/ghn/provinces');
-      return response.data?.data || [];
+      const list: GhnProvince[] = response.data?.data || [];
+      return list.filter((p) => {
+        const id = Number(p.ProvinceID);
+        const name = String(p.ProvinceName || '').toLowerCase();
+        if (id === 298 || id === 2002) return false;
+        if (name.includes('test') || name.includes('alert') || name.includes('hà nội 02')) return false;
+        return true;
+      });
     } catch (e) {
       console.log('Error fetching GHN provinces:', e);
       return [];

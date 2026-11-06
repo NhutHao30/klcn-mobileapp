@@ -220,8 +220,15 @@ export default function CustomerAddressesPage() {
 
   const filteredProvinces = useMemo(() => {
     const q = pickerSearch.trim().toLowerCase();
-    if (!q) return provinces;
-    return provinces.filter((p) => p.ProvinceName.toLowerCase().includes(q));
+    const cleanList = provinces.filter((p) => {
+      const id = Number(p.ProvinceID);
+      const name = String(p.ProvinceName || '').toLowerCase();
+      if (id === 298 || id === 2002) return false;
+      if (name.includes('test') || name.includes('alert') || name.includes('hà nội 02')) return false;
+      return true;
+    });
+    if (!q) return cleanList;
+    return cleanList.filter((p) => p.ProvinceName.toLowerCase().includes(q));
   }, [provinces, pickerSearch]);
 
   const filteredWards = useMemo(() => {
