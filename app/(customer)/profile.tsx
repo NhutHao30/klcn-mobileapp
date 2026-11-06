@@ -769,7 +769,7 @@ export default function CustomerProfilePage() {
 
         <View style={[styles.menuCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
           {/* CSKH & CHATBOT AI */}
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(customer)/chat')}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(customer)/chat' as any)}>
             <View style={[styles.iconBg, { backgroundColor: '#d9770615' }]}>
               <Ionicons name="chatbubbles-outline" size={20} color="#d97706" />
             </View>

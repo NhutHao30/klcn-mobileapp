@@ -19,6 +19,11 @@ const PRICE_FILTERS = [
   { id: 'over300', label: '> 300k' },
 ];
 
+interface CategoryItem {
+  id: string | number;
+  name: string;
+}
+
 export default function CustomerProductsPage() {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -28,8 +33,10 @@ export default function CustomerProductsPage() {
   const colors = Colors[colorScheme ?? 'light'];
   const { addToCart, toggleWishlist, isFavorite, cartCount, notificationMsg, clearNotification } = useCart();
   
-  const [categories, setCategories] = useState<string[]>(['Tất cả', 'Bánh kếp', 'Bánh su kem', 'Bánh mì nướng', 'Bánh khác']);
-  const [selectedCat, setSelectedCat] = useState('Tất cả');
+  const [categories, setCategories] = useState<CategoryItem[]>([
+    { id: 'all', name: 'Tất cả' },
+  ]);
+  const [selectedCat, setSelectedCat] = useState<string | number>('all');
   const [selectedPriceFilter, setSelectedPriceFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -41,6 +48,38 @@ export default function CustomerProductsPage() {
   const [totalProducts, setTotalProducts] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Load Categories dynamically from system
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const res = await productApi.getCategories();
+      let list: any[] = [];
+      if (Array.isArray(res)) {
+        list = res;
+      } else if (res?.data && Array.isArray(res.data)) {
+        list = res.data;
+      }
+
+      if (list.length > 0) {
+        const mapped: CategoryItem[] = [
+          { id: 'all', name: 'Tất cả' },
+          ...list
+            .filter((c: any) => c.trangThai === undefined || c.trangThai === 1 || c.trang_thai === 1)
+            .map((c: any) => ({
+              id: c.id ?? c.MALOAI ?? c.slug ?? c.tenLoai,
+              name: c.tenLoai ?? c.TENLOAI ?? c.name ?? `Loại ${c.id}`,
+            })),
+        ];
+        setCategories(mapped);
+      }
+    } catch (e) {
+      console.log('Error loading categories:', e);
+    }
+  };
+
   useEffect(() => {
     if (initialCategory) {
       setSelectedCat(initialCategory);
@@ -49,12 +88,16 @@ export default function CustomerProductsPage() {
 
   useEffect(() => {
     loadProducts(currentPage);
-  }, [currentPage]);
+  }, [currentPage, selectedCat]);
 
   const loadProducts = async (page: number = 1) => {
     setIsLoading(true);
     try {
-      const data = await productApi.getProducts({ page });
+      const params: any = { page, size: 50 };
+      if (selectedCat !== 'all' && selectedCat !== 'Tất cả') {
+        params.category = selectedCat;
+      }
+      const data = await productApi.getProducts(params);
       let items: any[] = [];
       
       if (data) {
@@ -66,17 +109,21 @@ export default function CustomerProductsPage() {
         } else if (Array.isArray(data)) {
           items = data;
           setLastPage(1);
+          setTotalProducts(data.length);
         }
       }
 
       if (items.length > 0) {
-        setProductsList(items.map((p: any) => {
+        const mapped = items.map((p: any) => {
           const qty = Number(p.soLuongTon ?? p.SOLUONG_TON ?? p.TONKHO_THUCTE ?? 0);
           const isOut = Boolean(p.isOutOfStock || qty <= 0);
+          const catName = p.loaiSanPham?.tenLoai || p.loai_san_pham?.tenLoai || p.loai_san_pham?.TENLOAI || p.loaisanpham?.TENLOAI || p.loaiSanPham?.TENLOAI || p.category || 'Bánh ngọt';
+          const catId = p.loaiId ?? p.loai_id ?? p.MALOAI ?? p.loaisanpham?.id ?? p.loai_san_pham?.id ?? p.loaiSanPham?.id;
           return {
             id: p.MASP || p.id,
             name: p.TENSP || p.name,
-            category: p.loaisanpham?.TENLOAI || p.category || 'Bánh ngọt',
+            category: catName,
+            categoryId: catId,
             price: p.GIABAN ? Number(p.GIABAN) : (p.giaBan ? Number(p.giaBan) : 0),
             salePrice: p.GIAGIAM ? Number(p.GIAGIAM) : null,
             discount: p.GIAGIAM ? Math.round(((Number(p.GIABAN) - Number(p.GIAGIAM)) / Number(p.GIABAN)) * 100) : 0,
@@ -85,35 +132,30 @@ export default function CustomerProductsPage() {
             soLuongTon: qty,
             isOutOfStock: isOut,
           };
-        }));
+        });
+        setProductsList(mapped);
+
+        // Auto-extract categories from products if categoryApi didn't return any
+        setCategories(prevCats => {
+          if (prevCats.length <= 1) {
+            const uniqueCats = Array.from(new Set(mapped.map(p => p.category).filter(Boolean)));
+            if (uniqueCats.length > 0) {
+              return [
+                { id: 'all', name: 'Tất cả' },
+                ...uniqueCats.map(name => ({ id: name, name })),
+              ];
+            }
+          }
+          return prevCats;
+        });
+      } else {
+        setProductsList([]);
       }
     } catch (e) {
-      // Fallback
+      console.log('Error loading products:', e);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const getProductCategoryGroup = (p: any): string => {
-    const name = (p.name || '').toLowerCase();
-    const cat = (p.category || '').toUpperCase();
-    
-    if (name.includes('kếp') || name.includes('crepe')) {
-      return 'Bánh kếp';
-    }
-    if (name.includes('su kem') || name.includes('choux')) {
-      return 'Bánh su kem';
-    }
-    if (
-      name.includes('mì nướng') || 
-      name.includes('sừng bò') || 
-      name.includes('croissant') || 
-      name.includes('bơ tỏi') || 
-      cat.includes('BÁNH MÌ')
-    ) {
-      return 'Bánh mì nướng';
-    }
-    return 'Bánh khác';
   };
 
   // Filtering Logic
@@ -121,7 +163,13 @@ export default function CustomerProductsPage() {
     const finalPrice = p.salePrice || p.price;
 
     // 1. Category Filter
-    const matchesCat = selectedCat === 'Tất cả' || getProductCategoryGroup(p) === selectedCat;
+    let matchesCat = true;
+    if (selectedCat !== 'all' && selectedCat !== 'Tất cả') {
+      const target = String(selectedCat).toLowerCase().trim();
+      const pCatId = p.categoryId !== undefined && p.categoryId !== null ? String(p.categoryId).toLowerCase().trim() : '';
+      const pCatName = (p.category || '').toLowerCase().trim();
+      matchesCat = pCatId === target || pCatName === target || pCatName.includes(target) || target.includes(pCatName);
+    }
 
     // 2. Search Query
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -272,18 +320,25 @@ export default function CustomerProductsPage() {
         {/* CATEGORIES SCROLL */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.catScroll}>
           {categories.map(cat => {
-            const isSelected = selectedCat === cat;
+            const isSelected = selectedCat === cat.id ||
+                              String(selectedCat).toLowerCase() === String(cat.id).toLowerCase() ||
+                              String(selectedCat).toLowerCase() === cat.name.toLowerCase();
             return (
               <TouchableOpacity
-                key={cat}
+                key={String(cat.id)}
                 style={[
                   styles.catTab,
                   { backgroundColor: isSelected ? colors.tint : colors.cardBg, borderColor: colors.cardBorder }
                 ]}
-                onPress={() => setSelectedCat(cat)}
+                onPress={() => {
+                  setSelectedCat(cat.id);
+                  if (currentPage !== 1) {
+                    setCurrentPage(1);
+                  }
+                }}
               >
                 <ThemedText style={[styles.catTabText, { color: isSelected ? '#fff' : colors.text }]}>
-                  {cat}
+                  {cat.name}
                 </ThemedText>
               </TouchableOpacity>
             );

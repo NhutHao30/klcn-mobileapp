@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -398,7 +398,7 @@ export default function AdminChat() {
           )}
 
           {/* INTERNAL INPUT BAR */}
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <View style={[styles.inputBar, { backgroundColor: colors.background, borderTopColor: colors.icon + '20' }]}>
               <TextInput
                 style={[styles.msgInput, { color: colors.text, borderColor: colors.icon + '30' }]}
@@ -516,7 +516,7 @@ export default function AdminChat() {
             )}
 
             {/* SEND BAR */}
-            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
               <View style={[styles.inputBar, { backgroundColor: colors.background, borderTopColor: colors.icon + '20' }]}>
                 <TextInput
                   style={[styles.msgInput, { color: colors.text, borderColor: colors.icon + '30' }]}

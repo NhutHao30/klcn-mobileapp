@@ -10,7 +10,9 @@ import {
   ActivityIndicator,
   useColorScheme,
   Alert,
+  Keyboard,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
@@ -26,6 +28,8 @@ export default function CustomerChatPage() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { isLoggedIn, user } = useAuth();
+  const insets = useSafeAreaInsets();
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -304,7 +308,7 @@ export default function CustomerChatPage() {
       {/* CHAT BODY */}
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         {loading ? (
@@ -345,6 +349,7 @@ export default function CustomerChatPage() {
             {
               backgroundColor: colorScheme === 'dark' ? '#0f172a' : '#ffffff',
               borderTopColor: colorScheme === 'dark' ? '#1e293b' : '#f1f5f9',
+              paddingBottom: keyboardVisible ? 8 : Math.max(insets.bottom, 10),
             },
           ]}
         >

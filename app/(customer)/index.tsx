@@ -577,7 +577,7 @@ export default function CustomerHomePage() {
       {/* FLOATING CHAT CSKH & BOT AI */}
       <TouchableOpacity
         style={styles.floatingChatBtn}
-        onPress={() => router.push('/(customer)/chat')}
+        onPress={() => router.push('/(customer)/chat' as any)}
         activeOpacity={0.85}
       >
         <Ionicons name="chatbubbles" size={26} color="#ffffff" />
